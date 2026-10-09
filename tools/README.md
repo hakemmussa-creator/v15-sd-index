@@ -9,7 +9,7 @@
    ```
 
    - `--old index.html` decrypts the live page and lists what changed.
-   - `missing_links` lists refs typed in the sheet that have no Drive folder link yet.
+   - `missing_links` lists refs typed in the sheet that have no Drive folder link yet. Find each folder in Drive (folders are named by ref) and pass them with `--links extra.json` ({"ARC-099": "https://drive.google.com/drive/folders/<id>"}).
 3. Commit the new `index.html` and push to `main`. GitHub Pages republishes in about a minute.
 
 The password and the Drive links are never stored in this repository in readable form; the data is AES-256 encrypted inside `index.html`.

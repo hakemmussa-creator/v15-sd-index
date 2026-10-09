@@ -9,7 +9,7 @@ Reads sheet '4.SD (2)':
   - Column A text + column B empty  -> heading row (top-level if text contains '/', else sub-section)
   - Column A number                 -> drawing row; B = description; D..G = 4BR T01, 4BR T02, 5BR T03, 5BR T04
   - D..G cell = =HYPERLINK("url","GPD-V15-QTGC-SD-XXX-NNN") -> clickable ref
-              = plain ref text      -> URL taken from the 'Drive Links' sheet (column B ref / E url); else reported missing
+              = plain ref text      -> URL from the 'Drive Links' sheet (B ref / E url) or --links JSON; else reported missing
               = any other text      -> shown as status (NOT SUBMITTED, NOT IN REGISTER, N/A, a date ...)
   - Orange fill (FFC000) -> "check" flag (best-match ref); yellow fill (FFFF00) on "NOT IN REGISTER" -> highlighted
 The decrypted data never contains the password; Drive links only exist inside the encrypted blob.
@@ -189,11 +189,15 @@ def main():
     ap.add_argument("--old", help="currently deployed index.html, to report what changed")
     ap.add_argument("--updated", default=datetime.date.today().strftime("%d %b %Y").lstrip("0"))
     ap.add_argument("--report", help="write a JSON report here")
+    ap.add_argument("--links", help="JSON file {ref: drive_folder_url} for refs not linked in the Excel (looked up in Drive by folder name)")
     a = ap.parse_args()
     pw = os.environ.get("V15_PASSWORD")
     if not pw:
         sys.exit("Set V15_PASSWORD")
     ws, links, notes = load(a.xlsx)
+    if a.links:
+        extra = json.load(open(a.links))
+        links.update({(k if k.startswith(PREFIX) else PREFIX + k): v for k, v in extra.items()})
     data, missing = parse(ws, links, notes)
     items = sum(len(s["items"]) for g in data for s in g["subs"])
     nlinks = sum(1 for g in data for s in g["subs"] for it in s["items"] for c in it["c"] if c.get("url"))
