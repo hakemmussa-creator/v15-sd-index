@@ -81,7 +81,7 @@ footer{margin-top:24px;font-size:12.5px;color:var(--muted)}
 <style>body{margin:0}[hidden]{display:none!important}</style>
 <style>
 .row{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;padding:11px 14px;border-top:1px solid var(--line);text-decoration:none;color:var(--ink);align-items:baseline}
-section.s .row:first-of-type{border-top:0}
+details.s .row:first-of-type{border-top:0}
 a.row:hover{background:var(--link-bg)}
 a.row:active{filter:brightness(.95)}
 a.row:focus-visible{outline:2px solid var(--link);outline-offset:-2px}
@@ -118,10 +118,52 @@ details.ud>summary:focus-visible{outline:2px solid var(--link);outline-offset:-2
 .ut ul{margin:2px 0 0;padding-left:16px;color:var(--muted);font-size:12.5px;overflow-wrap:anywhere}
 @media (max-width:640px){.ut thead{display:none}.ut tr{display:block;border-top:1px solid var(--line);padding:6px 4px}.ut td{display:block;border:0;padding:2px 10px}}
 </style>
+<style>
+/* v2: status colours, logo, collapsible sections */
+:root{--ok:#17663a;--ok-bg:#e2f3e8;--bad:#b42318;--bad-bg:#fde7e4;--ur:#7a5c00;--ur-bg:#fff2bf;--info:#3d5a80;--info-bg:#e6eef7}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ok:#7fd59d;--ok-bg:#163423;--bad:#ff9a8c;--bad-bg:#3d1a16;--ur:#f0cf62;--ur-bg:#352c0c;--info:#9cc0ea;--info-bg:#18273a}}
+:root[data-theme="dark"]{--ok:#7fd59d;--ok-bg:#163423;--bad:#ff9a8c;--bad-bg:#3d1a16;--ur:#f0cf62;--ur-bg:#352c0c;--info:#9cc0ea;--info-bg:#18273a}
+header.tb{text-align:center;padding-top:18px}
+header.tb .logo{display:block;width:64px;height:64px;margin:0 auto 10px;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.35);background:#000}
+header.tb .nav{margin-inline:auto}
+.st-ok{background:var(--ok-bg)!important;color:var(--ok)!important;border-left:3px solid var(--ok)}
+.st-bad{background:var(--bad-bg)!important;color:var(--bad)!important;border-left:3px solid var(--bad)}
+.st-ur{background:var(--ur-bg)!important;color:var(--ur)!important;border-left:3px solid var(--ur)}
+.st-info{background:var(--info-bg)!important;color:var(--info)!important;border-left:3px solid var(--info)}
+.sp{display:inline-block;margin-top:2px;font-size:11px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:1px 8px;border-radius:999px;white-space:nowrap}
+.pill.st-ok,.pill.st-bad,.pill.st-ur,.pill.st-info{border-left:0}
+details.s{background:var(--sheet);border:1px solid var(--line);border-radius:10px;margin:8px 0;overflow:hidden}
+details.s>summary{list-style:none;cursor:pointer;padding:11px 14px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
+details.s>summary::-webkit-details-marker{display:none}
+details.s>summary:focus-visible{outline:2px solid var(--link);outline-offset:-2px}
+details.s[open]>summary{border-bottom:1px solid var(--line)}
+.pm{width:22px;height:22px;border-radius:6px;background:var(--brand);color:var(--brand-ink);display:inline-grid;place-items:center;font:700 16px/1 var(--f-mono);flex:none}
+.pm::before{content:"+"}
+details[open]>summary .pm::before{content:"−"}
+.sum-r{margin-left:auto;display:flex;gap:6px;align-items:center;font-weight:500;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.dot{display:inline-flex;align-items:center;gap:3px}
+.dot i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.dot.ok i{background:var(--ok)}.dot.bad i{background:var(--bad)}.dot.ur i{background:var(--ur)}
+.tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tbtn{font:inherit;font-size:13px;font-weight:600;padding:5px 10px;border-radius:8px;border:1px solid var(--line);background:var(--sheet);color:var(--ink);cursor:pointer}
+.tbtn:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+#upd details.ud>summary .lab{font-weight:700}
+.ut td.dt{white-space:nowrap;color:var(--muted);font-size:12.5px}
+.ut-wrap{max-height:460px;overflow:auto}
+.pill{border:1px solid currentColor}
+:root{--none:#5f6b73;--none-bg:#eceff1}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--none:#a3b0b7;--none-bg:#20292d}}
+:root[data-theme="dark"]{--none:#a3b0b7;--none-bg:#20292d}
+@media (max-width:640px){.bar{position:static}}
+
+.ut thead th{position:sticky;top:0;background:var(--sheet);z-index:1}
+</style>
 </head>
 <body>
 <div class="wrap">
   <header class="tb">
+    <img class="logo" src="data:image/png;base64,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" alt="QUMRA – Qumra Transport &amp; General Contracting" width="64" height="64">
     <small>Grand Polo Club &amp; Resort · Cluster Montura (V15)</small>
     <h1>Material Submittals &amp; Pre-qualifications</h1>
     <p>Tap a row to open its folder in Google Drive. Folders are private to the owner's Google account.</p>
@@ -147,6 +189,18 @@ details.ud>summary:focus-visible{outline:2px solid var(--link);outline-offset:-2
       <button class="chip" data-ty="PQN" aria-pressed="false">PQN</button>
     </div>
     <div class="chips" role="group" aria-label="Discipline" id="dchips"></div>
+    <div class="chips" role="group" aria-label="Status">
+      <button class="chip" data-sf="" aria-pressed="true">All statuses</button>
+      <button class="chip" data-sf="ok" aria-pressed="false">✓ Approved (A/B)</button>
+      <button class="chip" data-sf="bad" aria-pressed="false">✗ Resubmit (C/D)</button>
+      <button class="chip" data-sf="ur" aria-pressed="false">… Under review</button>
+    </div>
+    <div class="tools"><button class="tbtn" id="xall" type="button">+ Expand all</button><button class="tbtn" id="call" type="button">− Collapse all</button></div>
+  </div>
+  <div class="legend">
+    <span><i class="sw" style="background:var(--ok-bg);border:1px solid var(--ok)"></i>Approved / code B</span>
+    <span><i class="sw" style="background:var(--bad-bg);border:1px solid var(--bad)"></i>Code C / D – resubmit</span>
+    <span><i class="sw" style="background:var(--ur-bg);border:1px solid var(--ur)"></i>Under review</span>
   </div>
   <p class="count" id="count"></p>
   <section id="upd" aria-label="Updates"></section>
@@ -159,6 +213,7 @@ details.ud>summary:focus-visible{outline:2px solid var(--link);outline-offset:-2
 <script>
 const ENC = __ENC__;
 const UPD = __UPD__;
+const STA = __STA__;
 let DATA = [];
 const LS = "v15sub-key";
 const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
@@ -191,6 +246,8 @@ async function unlock(pw){
   if (!txt.startsWith("V15OK")) return false;
   DATA = JSON.parse(txt.slice(5));
   UPDS = [];
+  STAT = {};
+  if (STA) { try { const u = (window.crypto && crypto.subtle) ? await decWebCrypto(pw, STA) : await decCJS(pw, STA); if (u.startsWith("V15OK")) STAT = JSON.parse(u.slice(5)); } catch(e){} }
   if (UPD) { try { const u = (window.crypto && crypto.subtle) ? await decWebCrypto(pw, UPD) : await decCJS(pw, UPD); if (u.startsWith("V15OK")) UPDS = JSON.parse(u.slice(5)); } catch(e){} }
   return true;
 }
@@ -224,28 +281,39 @@ function buildChips(){
     render();
   }));
 }
+const updKey = r => r.replace("GPD-V15-QTGC-", "");
 function row(it, g){
-  const short = it.r.replace(P, "");
-  const meta = `<span class="mt"><span class="tag ${it.ty.toLowerCase()}">${it.ty}</span><span>${esc(g)}</span>${it.u ? "" : '<span class="pend">· folder link pending</span>'}</span>`;
+  const short = it.r.replace(P, ""); const st = stOf(short);
+  const pill = st ? `<span class="pill st-${st.k}">${esc(st.label)}</span>` : "";
+  const meta = `<span class="mt"><span class="tag ${it.ty.toLowerCase()}">${it.ty}</span>${pill}<span>${esc(g)}</span>${it.u ? "" : '<span class="pend">· folder link pending</span>'}</span>`;
   const inner = `<span class="rf">${esc(short)}</span><span class="ti">${esc(it.t)}</span>${meta}`;
-  return it.u ? `<a class="row" href="${esc(it.u)}" target="_blank" rel="noopener" title="${esc(it.r)}">${inner}</a>`
-              : `<div class="row" title="${esc(it.r)}">${inner}</div>`;
+  const cls = "row" + (st ? " st-" + st.k : "");
+  return it.u ? `<a class="${cls}" href="${esc(it.u)}" target="_blank" rel="noopener" title="${esc(it.r + (st ? " — " + st.label + " (Rev." + String(st.rev).padStart(2,"0") + ")" : ""))}">${inner}</a>`
+              : `<div class="${cls}" title="${esc(it.r)}">${inner}</div>`;
 }
 function render(){
-  const ql = q.trim().toLowerCase();
+  const ql = q.trim().toLowerCase(), filtering = !!(ql || sf || ty || dg);
   let html = "", shown = 0;
   for (const g of DATA){
     if (dg && g.g !== dg) continue;
-    let rh = "", k = 0;
+    let rh = "", k = 0; const cnt = {ok:0, bad:0, ur:0};
     for (const it of g.items){
       if (ty && it.ty !== ty) continue;
       if (ql && !(it.r + " " + it.t + " " + g.g + " " + it.ty).toLowerCase().includes(ql)) continue;
+      const st = stOf(it.r.replace(P, ""));
+      if (sf && !stMatch(st)) continue;
+      if (st && cnt[st.k] !== undefined) cnt[st.k]++;
       rh += row(it, g.g); k++;
     }
-    if (k){ html += `<section class="s"><h3>${esc(g.g)}<em>${k} item${k>1?"s":""}</em></h3>${rh}</section>`; shown += k; }
+    if (k){
+      const open = filtering || openSet.has(g.g);
+      html += `<details class="s" data-k="${esc(g.g)}"${open ? " open" : ""}><summary><span class="pm" aria-hidden="true"></span>${esc(g.g)}<span class="sum-r">${dots(cnt)}<span>${k} item${k>1?"s":""}</span></span></summary>${rh}</details>`;
+      shown += k;
+    }
   }
-  list.innerHTML = html || `<p class="empty">No submittals match “${esc(q)}”.</p>`;
+  list.innerHTML = html || `<p class="empty">No submittals match your search or filter.</p>`;
   document.getElementById("count").textContent = shown + " reference" + (shown === 1 ? "" : "s");
+  wireSections();
 }
 document.getElementById("q").addEventListener("input", e => { q = e.target.value; render(); });
 document.querySelectorAll(".chip[data-ty]").forEach(b => b.addEventListener("click", () => {
@@ -255,14 +323,40 @@ document.querySelectorAll(".chip[data-ty]").forEach(b => b.addEventListener("cli
 }));
 
 let UPDS = [];
+
+let STAT = {};
+const CODE = {A:["ok","A · Approved"],B:["ok","B · Approved as noted"],C:["bad","C · Not approved – resubmit"],D:["bad","D · Incomplete – resubmit"],
+  E:["info","E · Information / record"],F:["bad","F · Approved w/ comments – resubmit"],U:["ur","Under review"]};
+function stOf(key){ const s = STAT[key]; if (!s) return null; const c = CODE[s[0]] || CODE.U; return {k:c[0], label:c[1], code:s[0], rev:s[1]}; }
+let sf = "", openSet = new Set();
+function stMatch(st){ if (!sf) return true; if (!st) return false; return sf === "ok" ? st.k === "ok" : sf === "bad" ? st.k === "bad" : st.k === "ur"; }
+function dots(c){ return ["ok","bad","ur"].filter(k => c[k]).map(k => `<span class="dot ${k}" title="${k==="ok"?"Approved":k==="bad"?"Resubmit":"Under review"}"><i></i>${c[k]}</span>`).join(""); }
+function wireSections(){
+  list.querySelectorAll("details.s").forEach(d => d.addEventListener("toggle", () => { d.open ? openSet.add(d.dataset.k) : openSet.delete(d.dataset.k); }));
+}
+document.getElementById("xall").addEventListener("click", () => { list.querySelectorAll("details.s").forEach(d => { d.open = true; openSet.add(d.dataset.k); }); });
+document.getElementById("call").addEventListener("click", () => { list.querySelectorAll("details.s").forEach(d => { d.open = false; }); openSet.clear(); });
+document.querySelectorAll(".chip[data-sf]").forEach(b => b.addEventListener("click", () => {
+  sf = b.dataset.sf;
+  document.querySelectorAll(".chip[data-sf]").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+  render();
+}));
 function renderUpd(){
   const box = document.getElementById("upd"); if (!box) return;
-  if (!UPDS.length){ box.innerHTML = ""; return; }
-  const K = {reply:"Reply received", new:"New submission", add:"Added"};
-  box.innerHTML = `<h2>Updates</h2>` + UPDS.map(d => {
-    const rows = d.items.map(it => `<tr><td class="r">${it.u ? `<a href="${esc(it.u)}" target="_blank" rel="noopener">${esc(it.r)}</a>` : esc(it.r)}<br><span style="color:var(--muted);font-size:12px">${esc(it.rev||"")}</span></td><td>${esc(it.t||"")}${it.f && it.f.length ? `<ul>${it.f.map(f=>`<li>${esc(f)}</li>`).join("")}</ul>` : ""}</td><td><span class="k ${esc(it.k)}">${esc(K[it.k]||it.k)}</span>${it.n?`<div style="color:var(--muted);font-size:12px;margin-top:3px">${esc(it.n)}</div>`:""}</td></tr>`).join("");
-    return `<details class="ud"><summary><span class="pm" aria-hidden="true"></span>${esc(d.label||d.d)}<em>${d.items.length} item${d.items.length>1?"s":""}</em></summary><table class="ut"><thead><tr><th>Reference</th><th>Title / files to review</th><th>Update</th></tr></thead><tbody>${rows}</tbody></table></details>`;
+  const rows = [];
+  for (const d of UPDS) for (const it of d.items) rows.push({d:d.d, label:d.label||d.d, it});
+  if (!rows.length){ box.innerHTML = ""; return; }
+  rows.sort((a,b) => a.d < b.d ? 1 : a.d > b.d ? -1 : 0);
+  const K = {reply:["ok","Reply received"], new:["ur","New submission"], add:["info","Added"]};
+  const body = rows.map(({label, it}) => {
+    const st = stOf(updKey(it.r)); const k = K[it.k] || ["info", it.k];
+    const code = st && it.k !== "new" ? ` <span class="pill st-${st.k}">${esc(st.label)}</span>` : "";
+    return `<tr><td class="dt">${esc(label)}</td><td class="r">${it.u ? `<a href="${esc(it.u)}" target="_blank" rel="noopener">${esc(it.r)}</a>` : esc(it.r)}<br><span style="color:var(--muted);font-size:12px">${esc(it.rev||"")}</span></td>`
+      + `<td>${esc(it.t||"")}${it.f && it.f.length ? `<ul>${it.f.map(f=>`<li>${esc(f)}</li>`).join("")}</ul>` : ""}</td>`
+      + `<td><span class="pill st-${k[0]}">${esc(k[1])}</span>${code}${it.n?`<div style="color:var(--muted);font-size:12px;margin-top:3px">${esc(it.n)}</div>`:""}</td></tr>`;
   }).join("");
+  box.innerHTML = `<details class="ud"><summary><span class="pm" aria-hidden="true"></span><span class="lab">Updates</span><em>${rows.length} item${rows.length>1?"s":""} · latest ${esc(rows[0].label)}</em></summary>`
+    + `<div class="ut-wrap"><table class="ut"><thead><tr><th>Date</th><th>Reference</th><th>Title / files to review</th><th>Update</th></tr></thead><tbody>${body}</tbody></table></div></details>`;
 }
 </script>
 

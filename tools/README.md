@@ -28,3 +28,12 @@ Each page has an encrypted "Updates" list (one collapsible day per update run), 
 encrypted with that page's own password. Rebuilds with `--old <page>` carry it forward. Add a day with:
 
     PAGE_PASSWORD='...' python3 tools/add_updates.py index.html day.json
+
+## Status colours (v2 layout)
+
+Both pages colour each reference by its latest Unifier status (green A/B, red C/D/F, yellow under review, grey E),
+stored encrypted in `const STA` and carried forward by rebuilds with `--old`. Refresh it with:
+
+    PAGE_PASSWORD='...' python3 tools/set_status.py index.html status.json   # {"SD-ARC-052": ["B", 2], ...}
+
+Sections are collapsible (+/−), with status filter chips; the Updates panel is one collapsible table sorted by date.
