@@ -81,6 +81,26 @@ footer{margin-top:24px;font-size:12.5px;color:var(--muted)}
 <style>.nav{display:inline-block;margin-top:10px;font-size:13px;font-weight:600;color:var(--brand-ink);padding:5px 11px;border:1px solid rgba(255,255,255,.45);border-radius:999px;text-decoration:none}
 .nav:focus-visible{outline:2px solid var(--brand-ink);outline-offset:2px}
 body{margin:0}[hidden]{display:none!important}</style>
+<style>
+#upd{margin:12px 0 4px}
+#upd h2{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 6px;font-weight:600}
+details.ud{background:var(--sheet);border:1px solid var(--line);border-radius:10px;margin:6px 0;overflow:hidden}
+details.ud>summary{list-style:none;cursor:pointer;padding:10px 14px;display:flex;align-items:center;gap:10px;font-weight:700}
+details.ud>summary::-webkit-details-marker{display:none}
+details.ud>summary .pm{width:22px;height:22px;border-radius:6px;background:var(--brand);color:var(--brand-ink);display:inline-grid;place-items:center;font:700 16px/1 var(--f-mono);flex:none}
+details.ud>summary .pm::before{content:"+"}
+details.ud[open]>summary .pm::before{content:"−"}
+details.ud>summary em{font-style:normal;font-weight:500;color:var(--muted);font-size:13px;margin-left:auto}
+details.ud>summary:focus-visible{outline:2px solid var(--link);outline-offset:-2px}
+.ut{width:100%;border-collapse:collapse;font-size:13.5px}
+.ut th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:6px 10px;border-top:1px solid var(--line)}
+.ut td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
+.ut td.r a{font-family:var(--f-mono);font-size:12.5px;color:var(--link);font-weight:500;white-space:nowrap}
+.ut .k{display:inline-block;font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;white-space:nowrap}
+.ut .k.reply{background:#e3f4e8;color:#1e7a3c}.ut .k.new{background:var(--link-bg);color:var(--link)}.ut .k.add{background:var(--flag-bg);color:var(--flag)}
+.ut ul{margin:2px 0 0;padding-left:16px;color:var(--muted);font-size:12.5px;overflow-wrap:anywhere}
+@media (max-width:640px){.ut thead{display:none}.ut tr{display:block;border-top:1px solid var(--line);padding:6px 4px}.ut td{display:block;border:0;padding:2px 10px}}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -117,6 +137,7 @@ body{margin:0}[hidden]{display:none!important}</style>
     <span><i class="sw" style="background:var(--flag-bg);border:1px solid var(--flag)"></i>Check: best-match ref</span>
     <span><i class="sw" style="background:var(--none-bg);border:1px solid var(--none)"></i>Not in submittal register</span>
   </div>
+  <section id="upd" aria-label="Updates"></section>
   <main id="list"></main>
   <button id="out" type="button">Lock this device</button>
   </div>
@@ -125,14 +146,15 @@ body{margin:0}[hidden]{display:none!important}</style>
 
 <script>
 const ENC = __ENC__;
+const UPD = __UPD__;
 const TYPES = ["4BR T01","4BR T02","5BR T03","5BR T04"];
 let DATA = [];
 const LS = "v15sd-key";
 const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
-async function decWebCrypto(pw){
+async function decWebCrypto(pw,E){ E = E || ENC;
   const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
-  const key = await crypto.subtle.deriveKey({name:"PBKDF2", salt:b64(ENC.s), iterations:ENC.n, hash:"SHA-256"}, base, {name:"AES-CBC", length:256}, false, ["decrypt"]);
-  const pt = await crypto.subtle.decrypt({name:"AES-CBC", iv:b64(ENC.i)}, key, b64(ENC.c));
+  const key = await crypto.subtle.deriveKey({name:"PBKDF2", salt:b64(E.s), iterations:E.n, hash:"SHA-256"}, base, {name:"AES-CBC", length:256}, false, ["decrypt"]);
+  const pt = await crypto.subtle.decrypt({name:"AES-CBC", iv:b64(E.i)}, key, b64(E.c));
   return new TextDecoder().decode(pt);
 }
 function loadCJS(){
@@ -144,11 +166,11 @@ function loadCJS(){
     document.head.appendChild(s);
   });
 }
-async function decCJS(pw){
+async function decCJS(pw,E){ E = E || ENC;
   await loadCJS();
   const C = window.CryptoJS;
-  const key = C.PBKDF2(pw, C.enc.Base64.parse(ENC.s), {keySize:8, iterations:ENC.n, hasher:C.algo.SHA256});
-  const out = C.AES.decrypt({ciphertext:C.enc.Base64.parse(ENC.c)}, key, {iv:C.enc.Base64.parse(ENC.i), mode:C.mode.CBC, padding:C.pad.Pkcs7});
+  const key = C.PBKDF2(pw, C.enc.Base64.parse(E.s), {keySize:8, iterations:E.n, hasher:C.algo.SHA256});
+  const out = C.AES.decrypt({ciphertext:C.enc.Base64.parse(E.c)}, key, {iv:C.enc.Base64.parse(E.i), mode:C.mode.CBC, padding:C.pad.Pkcs7});
   return out.toString(C.enc.Utf8);
 }
 async function unlock(pw){
@@ -157,11 +179,13 @@ async function unlock(pw){
   catch(e){ if (e && e.message === "offline") throw e; txt = ""; }
   if (!txt.startsWith("V15OK")) return false;
   DATA = JSON.parse(txt.slice(5));
+  UPDS = [];
+  if (UPD) { try { const u = (window.crypto && crypto.subtle) ? await decWebCrypto(pw, UPD) : await decCJS(pw, UPD); if (u.startsWith("V15OK")) UPDS = JSON.parse(u.slice(5)); } catch(e){} }
   return true;
 }
 const store = { get(){ try { return localStorage.getItem(LS); } catch(e){ return null; } },
   set(v){ try { localStorage.setItem(LS, v); } catch(e){} }, del(){ try { localStorage.removeItem(LS); } catch(e){} } };
-function showApp(){ document.getElementById("lock").hidden = true; document.getElementById("app").hidden = false; render(); }
+function showApp(){ document.getElementById("lock").hidden = true; document.getElementById("app").hidden = false; renderUpd(); render(); }
 document.getElementById("lf").addEventListener("submit", async e => {
   e.preventDefault();
   const pw = document.getElementById("pw").value, btn = document.getElementById("go"), err = document.getElementById("err");
@@ -215,6 +239,17 @@ document.querySelectorAll(".chip").forEach(b => b.addEventListener("click", () =
   document.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
   render();
 }));
+
+let UPDS = [];
+function renderUpd(){
+  const box = document.getElementById("upd"); if (!box) return;
+  if (!UPDS.length){ box.innerHTML = ""; return; }
+  const K = {reply:"Reply received", new:"New submission", add:"Added"};
+  box.innerHTML = `<h2>Updates</h2>` + UPDS.map(d => {
+    const rows = d.items.map(it => `<tr><td class="r">${it.u ? `<a href="${esc(it.u)}" target="_blank" rel="noopener">${esc(it.r)}</a>` : esc(it.r)}<br><span style="color:var(--muted);font-size:12px">${esc(it.rev||"")}</span></td><td>${esc(it.t||"")}${it.f && it.f.length ? `<ul>${it.f.map(f=>`<li>${esc(f)}</li>`).join("")}</ul>` : ""}</td><td><span class="k ${esc(it.k)}">${esc(K[it.k]||it.k)}</span>${it.n?`<div style="color:var(--muted);font-size:12px;margin-top:3px">${esc(it.n)}</div>`:""}</td></tr>`).join("");
+    return `<details class="ud"><summary><span class="pm" aria-hidden="true"></span>${esc(d.label||d.d)}<em>${d.items.length} item${d.items.length>1?"s":""}</em></summary><table class="ut"><thead><tr><th>Reference</th><th>Title / files to review</th><th>Update</th></tr></thead><tbody>${rows}</tbody></table></details>`;
+  }).join("");
+}
 </script>
 
 </body>

@@ -127,8 +127,12 @@ def main():
         "removed": sorted(set(old) - set(titles)) if old else [],
         "groups": {g["g"]: len(g["items"]) for g in data},
     }
+    old_upd = "null"
+    if a.old and os.path.exists(a.old):
+        m = re.search(r"const UPD = (\{.*?\}|null);", open(a.old, encoding="utf-8").read(), re.S)
+        old_upd = m.group(1) if m else "null"
     tpl = open(os.path.join(HERE, "submittals_template.html"), encoding="utf-8").read()
-    html = tpl.replace("__ENC__", json.dumps(encrypt(data, pw))).replace("__UPDATED__", a.updated)
+    html = tpl.replace("__ENC__", json.dumps(encrypt(data, pw))).replace("__UPDATED__", a.updated).replace("__UPD__", old_upd)
     assert "drive.google" not in html and "MATERIAL SUBMITTAL" not in html
     open(a.out, "w", encoding="utf-8").write(html)
     if a.report:

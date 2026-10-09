@@ -21,3 +21,10 @@ Its password is separate from the shop drawing index and is passed only as the e
 Add Drive folder links later without the CSVs:
 
     SUB_PASSWORD='...' python3 tools/build_submittals.py --old submittals.html --links links.json --out submittals.html
+
+## Updates panel (both pages)
+
+Each page has an encrypted "Updates" list (one collapsible day per update run), stored in `const UPD` and
+encrypted with that page's own password. Rebuilds with `--old <page>` carry it forward. Add a day with:
+
+    PAGE_PASSWORD='...' python3 tools/add_updates.py index.html day.json

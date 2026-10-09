@@ -205,8 +205,12 @@ def main():
               "sections": [s["s"] for g in data for s in g["subs"]]}
     if a.old and os.path.exists(a.old):
         report["changes"] = diff(decrypt_page(a.old, pw), data)
+    old_upd = "null"
+    if a.old and os.path.exists(a.old):
+        m = re.search(r"const UPD = (\{.*?\}|null);", open(a.old, encoding="utf-8").read(), re.S)
+        old_upd = m.group(1) if m else "null"
     tpl = open(os.path.join(HERE, "page_template.html"), encoding="utf-8").read()
-    html = tpl.replace("__ENC__", json.dumps(encrypt(data, pw))).replace("__UPDATED__", a.updated)
+    html = tpl.replace("__ENC__", json.dumps(encrypt(data, pw))).replace("__UPDATED__", a.updated).replace("__UPD__", old_upd)
     assert "drive.google" not in html
     open(a.out, "w", encoding="utf-8").write(html)
     if a.report:
