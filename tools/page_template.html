@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>V15 Shop Drawing Index</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: drawing-register sheet — sticky title block + filters, then sections of items, each with a 4-cell villa-type strip */
+:root{
+  --paper:#f5f6f4; --sheet:#ffffff; --ink:#18232b; --muted:#5d6b73; --line:#d9dfe0;
+  --brand:#0f3b47; --brand-ink:#ffffff; --link:#0b5f86; --link-bg:#eaf3f7;
+  --flag:#b86e00; --flag-bg:#fff2dc; --none:#8a6d00; --none-bg:#fff9c9; --quiet-bg:#f0f2f1;
+  --f-ui:"IBM Plex Sans Condensed", "Arial Narrow", Arial, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0f1518; --sheet:#151d21; --ink:#e3e9eb; --muted:#93a2a9; --line:#26333a;
+  --brand:#123f4c; --brand-ink:#f1f6f7; --link:#7cc4e6; --link-bg:#16303b;
+  --flag:#f0b25a; --flag-bg:#3a2a12; --none:#e9d36a; --none-bg:#33300f; --quiet-bg:#1b2529; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --paper:#0f1518; --sheet:#151d21; --ink:#e3e9eb; --muted:#93a2a9; --line:#26333a;
+  --brand:#123f4c; --brand-ink:#f1f6f7; --link:#7cc4e6; --link-bg:#16303b;
+  --flag:#f0b25a; --flag-bg:#3a2a12; --none:#e9d36a; --none-bg:#33300f; --quiet-bg:#1b2529; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.4}
+.wrap{max-width:980px;margin:0 auto;padding-inline:16px;padding-block:0 40px}
+header.tb{background:var(--brand);color:var(--brand-ink);margin-inline:-16px;padding:16px}
+.tb small{display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
+.tb h1{margin:2px 0 4px;font-size:22px;font-weight:700;text-wrap:balance}
+.tb p{margin:0;font-size:13px;opacity:.85}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);margin-inline:-16px;padding:10px 16px;border-bottom:1px solid var(--line);display:grid;gap:8px}
+#q{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--sheet);color:var(--ink)}
+#q:focus-visible,.chip:focus-visible,a.ref:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:inherit;font-size:14px;font-weight:600;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:var(--sheet);color:var(--ink);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted);margin:12px 0 4px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+h2.g{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:26px 0 6px;font-weight:600}
+section.s{background:var(--sheet);border:1px solid var(--line);border-radius:10px;margin:10px 0;overflow:hidden}
+section.s h3{margin:0;padding:10px 14px;font-size:16px;font-weight:700;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+section.s h3 em{font-style:normal;font-weight:500;color:var(--muted);font-size:13px;white-space:nowrap}
+.it{padding:10px 14px;border-top:1px solid var(--line)}
+.it:first-of-type{border-top:0}
+.it .d{display:flex;gap:8px;align-items:baseline;margin-bottom:8px}
+.it .n{font-family:var(--f-mono);font-size:12px;color:var(--muted);min-width:22px;font-variant-numeric:tabular-nums}
+.it .t{font-weight:500;min-width:0}
+.cells{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+@media (max-width:640px){.cells{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.only .cells{grid-template-columns:1fr}
+.c{border-radius:7px;padding:6px 8px;min-width:0;background:var(--quiet-bg);display:flex;flex-direction:column;gap:1px;text-decoration:none;color:var(--muted)}
+.c .ty{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.c .v{font-family:var(--f-mono);font-size:13px;overflow-wrap:anywhere}
+a.ref{background:var(--link-bg);color:var(--link)}
+a.ref .v{text-decoration:underline;text-underline-offset:2px;font-weight:500}
+a.ref:active{filter:brightness(.95)}
+a.ref.chk{background:var(--flag-bg);color:var(--flag)}
+a.ref.chk .ty::after{content:" · check";font-weight:600}
+.c.nf{background:var(--none-bg);color:var(--none)}
+.empty{padding:30px 0;text-align:center;color:var(--muted)}
+footer{margin-top:24px;font-size:12.5px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){a.ref{transition:filter .1s}}
+
+.lock{min-height:70vh;display:grid;place-items:center;padding-block:24px}
+.lock form{width:100%;max-width:360px;background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:20px;display:grid;gap:12px}
+.lock h2{margin:0;font-size:18px}
+.lock p{margin:0;color:var(--muted);font-size:13.5px}
+.lock label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.lock input[type=password]{width:100%;font:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+.lock .row{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted)}
+.lock button{font:inherit;font-size:16px;font-weight:600;padding:11px;border:0;border-radius:8px;background:var(--brand);color:var(--brand-ink);cursor:pointer}
+.lock button:disabled{opacity:.6}
+.lock .err{color:#c0392b;font-size:13.5px;min-height:1em}
+.lock input:focus-visible,.lock button:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+#out{font:inherit;font-size:13px;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:var(--sheet);color:var(--muted);cursor:pointer;justify-self:start}
+</style>
+
+<style>body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="tb">
+    <small>Grand Polo Club &amp; Resort · Cluster Montura (V15)</small>
+    <h1>Shop Drawing Index</h1>
+    <p>Tap a submittal number to open its drawing folder in Google Drive.</p>
+  </header>
+  <section class="lock" id="lock">
+    <form id="lf" autocomplete="off">
+      <h2>Team access</h2>
+      <p>Enter the password shared by the V15 technical office to open the drawing index.</p>
+      <label for="pw">Password</label>
+      <input id="pw" type="password" required autocomplete="current-password">
+      <div class="row"><input id="rem" type="checkbox" checked><label for="rem" style="text-transform:none;letter-spacing:0;font-size:13.5px">Remember on this device</label></div>
+      <button id="go" type="submit">Open index</button>
+      <div class="err" id="err" role="alert"></div>
+    </form>
+  </section>
+  <div id="app" hidden>
+  <div class="bar">
+    <input id="q" type="search" placeholder="Search drawing or ref no. (e.g. staircase, STR-045)" autocomplete="off">
+    <div class="chips" role="group" aria-label="Villa type">
+      <button class="chip" data-t="-1" aria-pressed="true">All types</button>
+      <button class="chip" data-t="0" aria-pressed="false">4BR T01</button>
+      <button class="chip" data-t="1" aria-pressed="false">4BR T02</button>
+      <button class="chip" data-t="2" aria-pressed="false">5BR T03</button>
+      <button class="chip" data-t="3" aria-pressed="false">5BR T04</button>
+    </div>
+  </div>
+  <div class="legend">
+    <span><i class="sw" style="background:var(--link-bg);border:1px solid var(--link)"></i>Opens drawing folder</span>
+    <span><i class="sw" style="background:var(--flag-bg);border:1px solid var(--flag)"></i>Check: best-match ref</span>
+    <span><i class="sw" style="background:var(--none-bg);border:1px solid var(--none)"></i>Not in submittal register</span>
+  </div>
+  <main id="list"></main>
+  <button id="out" type="button">Lock this device</button>
+  </div>
+  <footer>All references are GPD-V15-QTGC-SD-… · Updated __UPDATED__.</footer>
+</div>
+
+<script>
+const ENC = __ENC__;
+const TYPES = ["4BR T01","4BR T02","5BR T03","5BR T04"];
+let DATA = [];
+const LS = "v15sd-key";
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function decWebCrypto(pw){
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey({name:"PBKDF2", salt:b64(ENC.s), iterations:ENC.n, hash:"SHA-256"}, base, {name:"AES-CBC", length:256}, false, ["decrypt"]);
+  const pt = await crypto.subtle.decrypt({name:"AES-CBC", iv:b64(ENC.i)}, key, b64(ENC.c));
+  return new TextDecoder().decode(pt);
+}
+function loadCJS(){
+  return new Promise((ok, bad) => {
+    if (window.CryptoJS) return ok();
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js";
+    s.onload = ok; s.onerror = () => bad(new Error("offline"));
+    document.head.appendChild(s);
+  });
+}
+async function decCJS(pw){
+  await loadCJS();
+  const C = window.CryptoJS;
+  const key = C.PBKDF2(pw, C.enc.Base64.parse(ENC.s), {keySize:8, iterations:ENC.n, hasher:C.algo.SHA256});
+  const out = C.AES.decrypt({ciphertext:C.enc.Base64.parse(ENC.c)}, key, {iv:C.enc.Base64.parse(ENC.i), mode:C.mode.CBC, padding:C.pad.Pkcs7});
+  return out.toString(C.enc.Utf8);
+}
+async function unlock(pw){
+  let txt = "";
+  try { txt = (window.crypto && crypto.subtle) ? await decWebCrypto(pw) : await decCJS(pw); }
+  catch(e){ if (e && e.message === "offline") throw e; txt = ""; }
+  if (!txt.startsWith("V15OK")) return false;
+  DATA = JSON.parse(txt.slice(5));
+  return true;
+}
+const store = { get(){ try { return localStorage.getItem(LS); } catch(e){ return null; } },
+  set(v){ try { localStorage.setItem(LS, v); } catch(e){} }, del(){ try { localStorage.removeItem(LS); } catch(e){} } };
+function showApp(){ document.getElementById("lock").hidden = true; document.getElementById("app").hidden = false; render(); }
+document.getElementById("lf").addEventListener("submit", async e => {
+  e.preventDefault();
+  const pw = document.getElementById("pw").value, btn = document.getElementById("go"), err = document.getElementById("err");
+  btn.disabled = true; btn.textContent = "Checking…"; err.textContent = "";
+  try {
+    if (await unlock(pw)) { if (document.getElementById("rem").checked) store.set(pw); showApp(); }
+    else { err.textContent = "Wrong password. Check it and try again."; }
+  } catch(x) { err.textContent = "Couldn't open the index. Check your internet connection and try again."; }
+  btn.disabled = false; btn.textContent = "Open index";
+});
+document.getElementById("out").addEventListener("click", () => { store.del(); location.reload(); });
+(async () => { const saved = store.get(); if (saved) { try { if (await unlock(saved)) showApp(); else store.del(); } catch(e){} } })();
+const P = "GPD-V15-QTGC-SD-";
+let q = "", t = -1;
+const list = document.getElementById("list");
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function cell(c, i){
+  const ty = `<span class="ty">${TYPES[i]}</span>`;
+  if (c.ref){
+    const tip = c.chk ? ` title="${esc(c.chk)}"` : "";
+    return `<a class="c ref${c.chk?" chk":""}" href="${c.url}" target="_blank" rel="noopener"${tip}>${ty}<span class="v">${esc(c.ref)}</span></a>`;
+  }
+  const txt = c.txt === "NOT IN REGISTER" ? "Not in register" : c.txt === "NOT SUBMITTED" ? "Not submitted" : (c.txt || "—");
+  return `<div class="c${c.nf?" nf":""}">${ty}<span class="v">${esc(txt)}</span></div>`;
+}
+function render(){
+  const ql = q.trim().toLowerCase();
+  let html = "", shown = 0;
+  for (const g of DATA){
+    let gh = "";
+    for (const s of g.subs){
+      let ih = "", k = 0;
+      for (const it of s.items){
+        const hay = (it.d + " " + s.s + " " + it.c.map(c => c.ref ? c.ref + " " + P + c.ref : c.txt).join(" ")).toLowerCase();
+        if (ql && !hay.includes(ql)) continue;
+        if (t >= 0 && !it.c[t].ref && ql) { /* keep so user sees status */ }
+        const cs = t >= 0 ? cell(it.c[t], t) : it.c.map(cell).join("");
+        ih += `<div class="it"><div class="d"><span class="n">${it.n}</span><span class="t">${esc(it.d)}</span></div><div class="cells">${cs}</div></div>`;
+        k++;
+      }
+      if (k){ gh += `<section class="s"><h3>${esc(s.s)}<em>${k} item${k>1?"s":""}</em></h3>${ih}</section>`; shown += k; }
+    }
+    if (gh) html += `<h2 class="g">${esc(g.g)}</h2>` + gh;
+  }
+  list.innerHTML = html || `<p class="empty">No drawings match “${esc(q)}”.</p>`;
+  list.classList.toggle("only", t >= 0);
+}
+document.getElementById("q").addEventListener("input", e => { q = e.target.value; render(); });
+document.querySelectorAll(".chip").forEach(b => b.addEventListener("click", () => {
+  t = +b.dataset.t;
+  document.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+  render();
+}));
+</script>
+
+</body>
+</html>
