@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>V15 MAS &amp; PQN Index</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: drawing-register sheet — sticky title block + filters, then sections of items, each with a 4-cell villa-type strip */
+:root{
+  --paper:#f5f6f4; --sheet:#ffffff; --ink:#18232b; --muted:#5d6b73; --line:#d9dfe0;
+  --brand:#0f3b47; --brand-ink:#ffffff; --link:#0b5f86; --link-bg:#eaf3f7;
+  --flag:#b86e00; --flag-bg:#fff2dc; --none:#8a6d00; --none-bg:#fff9c9; --quiet-bg:#f0f2f1;
+  --f-ui:"IBM Plex Sans Condensed", "Arial Narrow", Arial, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0f1518; --sheet:#151d21; --ink:#e3e9eb; --muted:#93a2a9; --line:#26333a;
+  --brand:#123f4c; --brand-ink:#f1f6f7; --link:#7cc4e6; --link-bg:#16303b;
+  --flag:#f0b25a; --flag-bg:#3a2a12; --none:#e9d36a; --none-bg:#33300f; --quiet-bg:#1b2529; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --paper:#0f1518; --sheet:#151d21; --ink:#e3e9eb; --muted:#93a2a9; --line:#26333a;
+  --brand:#123f4c; --brand-ink:#f1f6f7; --link:#7cc4e6; --link-bg:#16303b;
+  --flag:#f0b25a; --flag-bg:#3a2a12; --none:#e9d36a; --none-bg:#33300f; --quiet-bg:#1b2529; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.4}
+.wrap{max-width:980px;margin:0 auto;padding-inline:16px;padding-block:0 40px}
+header.tb{background:var(--brand);color:var(--brand-ink);margin-inline:-16px;padding:16px}
+.tb small{display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
+.tb h1{margin:2px 0 4px;font-size:22px;font-weight:700;text-wrap:balance}
+.tb p{margin:0;font-size:13px;opacity:.85}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);margin-inline:-16px;padding:10px 16px;border-bottom:1px solid var(--line);display:grid;gap:8px}
+#q{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--sheet);color:var(--ink)}
+#q:focus-visible,.chip:focus-visible,a.ref:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:inherit;font-size:14px;font-weight:600;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:var(--sheet);color:var(--ink);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted);margin:12px 0 4px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+h2.g{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:26px 0 6px;font-weight:600}
+section.s{background:var(--sheet);border:1px solid var(--line);border-radius:10px;margin:10px 0;overflow:hidden}
+section.s h3{margin:0;padding:10px 14px;font-size:16px;font-weight:700;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+section.s h3 em{font-style:normal;font-weight:500;color:var(--muted);font-size:13px;white-space:nowrap}
+.it{padding:10px 14px;border-top:1px solid var(--line)}
+.it:first-of-type{border-top:0}
+.it .d{display:flex;gap:8px;align-items:baseline;margin-bottom:8px}
+.it .n{font-family:var(--f-mono);font-size:12px;color:var(--muted);min-width:22px;font-variant-numeric:tabular-nums}
+.it .t{font-weight:500;min-width:0}
+.cells{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+@media (max-width:640px){.cells{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.only .cells{grid-template-columns:1fr}
+.c{border-radius:7px;padding:6px 8px;min-width:0;background:var(--quiet-bg);display:flex;flex-direction:column;gap:1px;text-decoration:none;color:var(--muted)}
+.c .ty{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.c .v{font-family:var(--f-mono);font-size:13px;overflow-wrap:anywhere}
+a.ref{background:var(--link-bg);color:var(--link)}
+a.ref .v{text-decoration:underline;text-underline-offset:2px;font-weight:500}
+a.ref:active{filter:brightness(.95)}
+a.ref.chk{background:var(--flag-bg);color:var(--flag)}
+a.ref.chk .ty::after{content:" · check";font-weight:600}
+.c.nf{background:var(--none-bg);color:var(--none)}
+.empty{padding:30px 0;text-align:center;color:var(--muted)}
+footer{margin-top:24px;font-size:12.5px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){a.ref{transition:filter .1s}}
+
+.lock{min-height:70vh;display:grid;place-items:center;padding-block:24px}
+.lock form{width:100%;max-width:360px;background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:20px;display:grid;gap:12px}
+.lock h2{margin:0;font-size:18px}
+.lock p{margin:0;color:var(--muted);font-size:13.5px}
+.lock label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.lock input[type=password]{width:100%;font:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+.lock .row{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted)}
+.lock button{font:inherit;font-size:16px;font-weight:600;padding:11px;border:0;border-radius:8px;background:var(--brand);color:var(--brand-ink);cursor:pointer}
+.lock button:disabled{opacity:.6}
+.lock .err{color:#c0392b;font-size:13.5px;min-height:1em}
+.lock input:focus-visible,.lock button:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+#out{font:inherit;font-size:13px;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:var(--sheet);color:var(--muted);cursor:pointer;justify-self:start}
+</style>
+
+<style>body{margin:0}[hidden]{display:none!important}</style>
+<style>
+.row{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;padding:11px 14px;border-top:1px solid var(--line);text-decoration:none;color:var(--ink);align-items:baseline}
+section.s .row:first-of-type{border-top:0}
+a.row:hover{background:var(--link-bg)}
+a.row:active{filter:brightness(.95)}
+a.row:focus-visible{outline:2px solid var(--link);outline-offset:-2px}
+.row .rf{font-family:var(--f-mono);font-size:13px;font-weight:500;color:var(--link);white-space:nowrap}
+.row .ti{font-weight:500;min-width:0;overflow-wrap:anywhere}
+.row .mt{grid-column:2;display:flex;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.tag{font-size:11px;font-weight:600;letter-spacing:.06em;padding:1px 7px;border-radius:999px;border:1px solid var(--line)}
+.tag.mas{background:var(--link-bg);color:var(--link);border-color:transparent}
+.tag.pqn{background:var(--flag-bg);color:var(--flag);border-color:transparent}
+div.row .rf{color:var(--muted)}
+div.row{opacity:.75}
+.pend{font-style:italic}
+@media (max-width:560px){.row{grid-template-columns:1fr}.row .mt{grid-column:1}}
+.nav{display:inline-block;margin-top:8px;font-size:13px;color:var(--brand-ink);opacity:.9}
+.count{font-size:13px;color:var(--muted);margin:10px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="tb">
+    <small>Grand Polo Club &amp; Resort · Cluster Montura (V15)</small>
+    <h1>Material Submittals &amp; Pre-qualifications</h1>
+    <p>Tap a row to open its folder in Google Drive. Folders are private to the owner's Google account.</p>
+    <a class="nav" href="./">← Shop drawing index</a>
+  </header>
+  <section class="lock" id="lock">
+    <form id="lf" autocomplete="off">
+      <h2>Private index</h2>
+      <p>Enter the password to open the MAS / PQN index.</p>
+      <label for="pw">Password</label>
+      <input id="pw" type="password" required autocomplete="current-password">
+      <div class="row2" style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted)"><input id="rem" type="checkbox" checked><label for="rem" style="text-transform:none;letter-spacing:0;font-size:13.5px">Remember on this device</label></div>
+      <button id="go" type="submit">Open index</button>
+      <div class="err" id="err" role="alert"></div>
+    </form>
+  </section>
+  <div id="app" hidden>
+  <div class="bar">
+    <input id="q" type="search" placeholder="Search title or ref no. (e.g. waterproofing, ARC-045, PQN)" autocomplete="off">
+    <div class="chips" role="group" aria-label="Type">
+      <button class="chip" data-ty="" aria-pressed="true">MAS + PQN</button>
+      <button class="chip" data-ty="MAS" aria-pressed="false">MAS</button>
+      <button class="chip" data-ty="PQN" aria-pressed="false">PQN</button>
+    </div>
+    <div class="chips" role="group" aria-label="Discipline" id="dchips"></div>
+  </div>
+  <p class="count" id="count"></p>
+  <main id="list"></main>
+  <button id="out" type="button">Lock this device</button>
+  </div>
+  <footer>All references are GPD-V15-QTGC-… · Latest revision folder per reference · Updated __UPDATED__.</footer>
+</div>
+
+<script>
+const ENC = __ENC__;
+let DATA = [];
+const LS = "v15sub-key";
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function decWebCrypto(pw){
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey({name:"PBKDF2", salt:b64(ENC.s), iterations:ENC.n, hash:"SHA-256"}, base, {name:"AES-CBC", length:256}, false, ["decrypt"]);
+  const pt = await crypto.subtle.decrypt({name:"AES-CBC", iv:b64(ENC.i)}, key, b64(ENC.c));
+  return new TextDecoder().decode(pt);
+}
+function loadCJS(){
+  return new Promise((ok, bad) => {
+    if (window.CryptoJS) return ok();
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js";
+    s.onload = ok; s.onerror = () => bad(new Error("offline"));
+    document.head.appendChild(s);
+  });
+}
+async function decCJS(pw){
+  await loadCJS();
+  const C = window.CryptoJS;
+  const key = C.PBKDF2(pw, C.enc.Base64.parse(ENC.s), {keySize:8, iterations:ENC.n, hasher:C.algo.SHA256});
+  const out = C.AES.decrypt({ciphertext:C.enc.Base64.parse(ENC.c)}, key, {iv:C.enc.Base64.parse(ENC.i), mode:C.mode.CBC, padding:C.pad.Pkcs7});
+  return out.toString(C.enc.Utf8);
+}
+async function unlock(pw){
+  let txt = "";
+  try { txt = (window.crypto && crypto.subtle) ? await decWebCrypto(pw) : await decCJS(pw); }
+  catch(e){ if (e && e.message === "offline") throw e; txt = ""; }
+  if (!txt.startsWith("V15OK")) return false;
+  DATA = JSON.parse(txt.slice(5));
+  return true;
+}
+const store = { get(){ try { return localStorage.getItem(LS); } catch(e){ return null; } },
+  set(v){ try { localStorage.setItem(LS, v); } catch(e){} }, del(){ try { localStorage.removeItem(LS); } catch(e){} } };
+function showApp(){ document.getElementById("lock").hidden = true; document.getElementById("app").hidden = false; buildChips(); render(); }
+document.getElementById("lf").addEventListener("submit", async e => {
+  e.preventDefault();
+  const pw = document.getElementById("pw").value, btn = document.getElementById("go"), err = document.getElementById("err");
+  btn.disabled = true; btn.textContent = "Checking…"; err.textContent = "";
+  try {
+    if (await unlock(pw)) { if (document.getElementById("rem").checked) store.set(pw); showApp(); }
+    else { err.textContent = "Wrong password. Check it and try again."; }
+  } catch(x) { err.textContent = "Couldn't open the index. Check your internet connection and try again."; }
+  btn.disabled = false; btn.textContent = "Open index";
+});
+document.getElementById("out").addEventListener("click", () => { store.del(); location.reload(); });
+(async () => { const saved = store.get(); if (saved) { try { if (await unlock(saved)) showApp(); else store.del(); } catch(e){} } })();
+
+const P = "GPD-V15-QTGC-";
+let q = "", ty = "", dg = "";
+const list = document.getElementById("list");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function buildChips(){
+  const box = document.getElementById("dchips");
+  box.innerHTML = `<button class="chip" data-dg="" aria-pressed="true">All disciplines</button>` +
+    DATA.map(g => `<button class="chip" data-dg="${esc(g.g)}" aria-pressed="false">${esc(g.g)}</button>`).join("");
+  box.querySelectorAll(".chip").forEach(b => b.addEventListener("click", () => {
+    dg = b.dataset.dg;
+    box.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+    render();
+  }));
+}
+function row(it, g){
+  const short = it.r.replace(P, "");
+  const meta = `<span class="mt"><span class="tag ${it.ty.toLowerCase()}">${it.ty}</span><span>${esc(g)}</span>${it.u ? "" : '<span class="pend">· folder link pending</span>'}</span>`;
+  const inner = `<span class="rf">${esc(short)}</span><span class="ti">${esc(it.t)}</span>${meta}`;
+  return it.u ? `<a class="row" href="${esc(it.u)}" target="_blank" rel="noopener" title="${esc(it.r)}">${inner}</a>`
+              : `<div class="row" title="${esc(it.r)}">${inner}</div>`;
+}
+function render(){
+  const ql = q.trim().toLowerCase();
+  let html = "", shown = 0;
+  for (const g of DATA){
+    if (dg && g.g !== dg) continue;
+    let rh = "", k = 0;
+    for (const it of g.items){
+      if (ty && it.ty !== ty) continue;
+      if (ql && !(it.r + " " + it.t + " " + g.g + " " + it.ty).toLowerCase().includes(ql)) continue;
+      rh += row(it, g.g); k++;
+    }
+    if (k){ html += `<section class="s"><h3>${esc(g.g)}<em>${k} item${k>1?"s":""}</em></h3>${rh}</section>`; shown += k; }
+  }
+  list.innerHTML = html || `<p class="empty">No submittals match “${esc(q)}”.</p>`;
+  document.getElementById("count").textContent = shown + " reference" + (shown === 1 ? "" : "s");
+}
+document.getElementById("q").addEventListener("input", e => { q = e.target.value; render(); });
+document.querySelectorAll(".chip[data-ty]").forEach(b => b.addEventListener("click", () => {
+  ty = b.dataset.ty;
+  document.querySelectorAll(".chip[data-ty]").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+  render();
+}));
+</script>
+
+</body>
+</html>

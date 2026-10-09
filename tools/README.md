@@ -13,3 +13,11 @@
 3. Commit the new `index.html` and push to `main`. GitHub Pages republishes in about a minute.
 
 The password and the Drive links are never stored in this repository in readable form; the data is AES-256 encrypted inside `index.html`.
+
+## MAS / PQN private index (`submittals.html`)
+
+Built by `build_submittals.py` + `submittals_template.html` from the Unifier CSV exports (Reference No, Revision No., Title, Discipline).
+Its password is separate from the shop drawing index and is passed only as the env var `SUB_PASSWORD`.
+Add Drive folder links later without the CSVs:
+
+    SUB_PASSWORD='...' python3 tools/build_submittals.py --old submittals.html --links links.json --out submittals.html
