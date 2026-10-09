@@ -127,6 +127,10 @@ for rr, body in re.findall(r'<row r="(\d+)"[^>]*>(.*?)</row>', s1, re.S):
 for a1, a2 in set(re.findall(r"C(\d+):G(\d+)", s1)):
     if arch and arch + 1 < int(a1) <= arch + 12:
         s1 = s1.replace(f"C{a1}:G{a2}", f"C{arch + 1}:G{a2}")
+# CIVIL summary range (starts at the first structure row, 7) must end just above the ARCHITECTURAL heading
+for a1, a2 in set(re.findall(r"C(\d+):G(\d+)", s1)):
+    if arch and int(a1) == 7 and int(a2) != arch - 1:
+        s1 = s1.replace(f"C7:G{a2}", f"C7:G{arch - 1}")
 wr("xl/worksheets/sheet1.xml", s1)
 
 wb = rd("xl/workbook.xml")
