@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>V15 MAS &amp; PQN Index</title>
+<title>V15 MAS, PQN &amp; RFI Index</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -91,6 +91,7 @@ a.row:focus-visible{outline:2px solid var(--link);outline-offset:-2px}
 .tag{font-size:11px;font-weight:600;letter-spacing:.06em;padding:1px 7px;border-radius:999px;border:1px solid var(--line)}
 .tag.mas{background:var(--link-bg);color:var(--link);border-color:transparent}
 .tag.pqn{background:var(--flag-bg);color:var(--flag);border-color:transparent}
+.tag.rfi{background:var(--line);color:var(--ink);border-color:transparent}
 div.row .rf{color:var(--muted)}
 div.row{opacity:.75}
 .pend{font-style:italic}
@@ -165,14 +166,14 @@ details[open]>summary .pm::before{content:"−"}
   <header class="tb">
     <img class="logo" src="data:image/png;base64,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" alt="QUMRA – Qumra Transport &amp; General Contracting" width="64" height="64">
     <small>Grand Polo Club &amp; Resort · Cluster Montura (V15)</small>
-    <h1>Material Submittals &amp; Pre-qualifications</h1>
+    <h1>Material Submittals, Pre-qualifications &amp; RFIs</h1>
     <p>Tap a row to open its folder in Google Drive. Folders are private to the owner's Google account.</p>
     <a class="nav" href="./">← Shop drawing index</a>
   </header>
   <section class="lock" id="lock">
     <form id="lf" autocomplete="off">
       <h2>Private index</h2>
-      <p>Enter the password to open the MAS / PQN index.</p>
+      <p>Enter the password to open the MAS / PQN / RFI index.</p>
       <label for="pw">Password</label>
       <input id="pw" type="password" required autocomplete="current-password">
       <div class="row2" style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted)"><input id="rem" type="checkbox" checked><label for="rem" style="text-transform:none;letter-spacing:0;font-size:13.5px">Remember on this device</label></div>
@@ -182,11 +183,12 @@ details[open]>summary .pm::before{content:"−"}
   </section>
   <div id="app" hidden>
   <div class="bar">
-    <input id="q" type="search" placeholder="Search title or ref no. (e.g. waterproofing, ARC-045, PQN)" autocomplete="off">
+    <input id="q" type="search" placeholder="Search title or ref no. (e.g. waterproofing, ARC-045, PQN, RFI)" autocomplete="off">
     <div class="chips" role="group" aria-label="Type">
-      <button class="chip" data-ty="" aria-pressed="true">MAS + PQN</button>
+      <button class="chip" data-ty="" aria-pressed="true">All</button>
       <button class="chip" data-ty="MAS" aria-pressed="false">MAS</button>
       <button class="chip" data-ty="PQN" aria-pressed="false">PQN</button>
+      <button class="chip" data-ty="RFI" aria-pressed="false">RFI</button>
     </div>
     <div class="chips" role="group" aria-label="Discipline" id="dchips"></div>
     <div class="chips" role="group" aria-label="Status">
@@ -267,7 +269,7 @@ document.getElementById("lf").addEventListener("submit", async e => {
 document.getElementById("out").addEventListener("click", () => { store.del(); location.reload(); });
 (async () => { const saved = store.get(); if (saved) { try { if (await unlock(saved)) showApp(); else store.del(); } catch(e){} } })();
 
-const P = "GPD-V15-QTGC-";
+const P = /^GPD-V1?5?-QTGC-/;
 let q = "", ty = "", dg = "";
 const list = document.getElementById("list");
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -281,7 +283,7 @@ function buildChips(){
     render();
   }));
 }
-const updKey = r => r.replace("GPD-V15-QTGC-", "");
+const updKey = r => r.replace(P, "");
 function row(it, g){
   const short = it.r.replace(P, ""); const st = stOf(short);
   const pill = st ? `<span class="pill st-${st.k}">${esc(st.label)}</span>` : "";
@@ -326,7 +328,7 @@ let UPDS = [];
 
 let STAT = {};
 const CODE = {A:["ok","A · Approved"],B:["ok","B · Approved as noted"],C:["bad","C · Not approved – resubmit"],D:["bad","D · Incomplete – resubmit"],
-  E:["info","E · Information / record"],F:["bad","F · Approved w/ comments – resubmit"],U:["ur","Under review"]};
+  E:["info","E · Information / record"],F:["bad","F · Approved w/ comments – resubmit"],U:["ur","Under review"],R:["ok","Responded"],W:["ur","Awaiting response"]};
 function stOf(key){ const s = STAT[key]; if (!s) return null; const c = CODE[s[0]] || CODE.U; return {k:c[0], label:c[1], code:s[0], rev:s[1]}; }
 let sf = "", openSet = new Set();
 function stMatch(st){ if (!sf) return true; if (!st) return false; return sf === "ok" ? st.k === "ok" : sf === "bad" ? st.k === "bad" : st.k === "ur"; }

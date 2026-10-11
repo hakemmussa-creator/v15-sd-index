@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the private MAS / PQN submittal index page (submittals.html).
+"""Build the private MAS / PQN / RFI index page (submittals.html).
 
 Usage:
   SUB_PASSWORD='...' python3 tools/build_submittals.py --csv mas.csv --csv pqn.csv \
@@ -21,7 +21,7 @@ from cryptography.hazmat.primitives import hashes, padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-REF_RE = re.compile(r"^GPD-V15-QTGC-(MAS|PQN)-([A-Z]+)-(\d+)$")
+REF_RE = re.compile(r"^GPD-V1?5?-QTGC-(MAS|PQN|RFI)-([A-Z]+)-(\d+)$")  # RFI added 11 Oct 2026 (one RFI ref is typed GPD-V1- in Unifier)
 GROUPS = [  # (page heading, discipline codes)
     ("Architectural", ["ARC"]),
     ("Structural", ["STR"]),
@@ -121,6 +121,7 @@ def main():
         "items": len(items),
         "MAS": sum(it["ty"] == "MAS" for it in items),
         "PQN": sum(it["ty"] == "PQN" for it in items),
+        "RFI": sum(it["ty"] == "RFI" for it in items),
         "links": sum(bool(it["u"]) for it in items),
         "missing_links": [it["r"] for it in items if not it["u"]],
         "added": sorted(set(titles) - set(old)) if old else [],
