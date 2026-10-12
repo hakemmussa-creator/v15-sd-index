@@ -1,0 +1,31 @@
+name: Publish pages from request
+on:
+  push:
+    branches: [main]
+    paths: ['publish/request.json']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: publish
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: pip install cryptography
+      - name: Apply request
+        env:
+          SD_PASSWORD: ${{ secrets.SD_PASSWORD }}
+          SUB_PASSWORD: ${{ secrets.SUB_PASSWORD }}
+        run: |
+          test -f publish/request.json || { echo "no request"; exit 0; }
+          ID=$(python3 -c "import json;print(json.load(open('publish/request.json')).get('id','request'))")
+          python3 tools/apply_request.py publish/request.json
+          git rm -q publish/request.json
+          git config user.name "v15-publisher"
+          git config user.email "v15-publisher@users.noreply.github.com"
+          git add index.html submittals.html
+          git commit -m "Publish $ID (applied publish/request.json)"
+          git push
