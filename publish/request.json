@@ -1,8 +1,0 @@
-{"id":"2026-10-13",
- "updates_index":{"d":"2026-10-13","label":"13 Oct 2026","items":[
-  {"r":"SD-ARC-081","rev":"Rev.00","t":"SHOP DRAWING FOR ALUMINIUM CANOPY FOR 5BR TYPE 04","k":"reply","n":"Consultant response received – code B","f":["GPD-V15-QTGC-SD-ARC-081 Rev.00 - Response B.pdf"],"u":"https://drive.google.com/drive/folders/1JxWaba1O7iTy2aZMVP4WolrRFa5empla"},
-  {"r":"SD-ARC-049","rev":"Rev.02","t":"SHOP DRAWING FOR SHOWER GLASS PARTITION FOR 4 BR TYPE 01","k":"reply","n":"Consultant response received – code B","f":["GPD-V15-QTGC-SD-ARC-049 Rev.02 - Response.pdf"],"u":"https://drive.google.com/drive/folders/1cDzMgxR0wMjzdiSd_pBAbLghJqA-3pkl"}]},
- "updates_sub":{"d":"2026-10-13","label":"13 Oct 2026","items":[
-  {"r":"PQN-MEC-004","rev":"Rev.00","t":"PRE QUALIFICATION FOR PRE-INSULATED DUCT & ACCESSORIES","k":"reply","n":"Consultant code C – forwarded to EMAAR MEP for review","f":["GPD-V15-QTGC-PQN-MEC-004 Rev.00 - for EMEP Review.pdf"],"u":"https://drive.google.com/drive/folders/1ZZHdu-Jp3ypzxCkyat9aOei6Os5KMlLo"},
-  {"r":"MAS-ARC-059","rev":"Rev.04","t":"MATERIAL SUBMITTAL FOR SHOWER GLASS IRONMONGERY","k":"new","n":"Rev.04 resubmitted – under consultant review","f":["GPD-V15-QTGC-MAS-ARC-059 Rev.04.pdf"],"u":"https://drive.google.com/drive/folders/1IlX_pYS4E7o4iAYJGlNsxUBqylhS0qh5"}]},
- "status":{"PQN-MEC-004":["C",0],"SD-ARC-081":["B",0],"SD-ARC-049":["B",2],"MAS-ARC-059":["U",4]}}
