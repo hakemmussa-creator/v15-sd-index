@@ -9,6 +9,7 @@ plan.json:
   "folders": {"SD-ARC-090": "<drive folder id>", ...},          # every ref used below
   "uses":    {"SD-ARC-090": "Row text for Drive Links sheet", ...}, # optional
   "set":     [{"cell": "E84", "ref": "SD-ARC-042"}],              # change existing cells (row numbers BEFORE inserts)
+  "delete":  [41, 50],                                             # optional: remove these rows first (original numbering)
   "insert":  [                                                     # 'before' = row number in the ORIGINAL file
     {"before": 34, "rows": [
         {"heading": "GENERAL (CLUSTER) DRAWINGS"},
@@ -90,15 +91,35 @@ for st in PLAN.get("set", []):
     s1 = s1[:m.start()] + cell(col, int(rr), "ref:" + st["ref"]) + s1[m.end():]
 
 row_map = {o: o for o in orig}
+
+# optional "delete": [first, last] (original numbering) - removed before the inserts are applied
+if PLAN.get("delete"):
+    da, db = PLAN["delete"]
+    dk = db - da + 1
+    def del_text(s):
+        parts = s.split('"')
+        for i in range(0, len(parts), 2):
+            parts[i] = REF.sub(lambda m: m.group(1) + m.group(2) + m.group(3) + str(
+                int(m.group(4)) - dk if int(m.group(4)) > db else (da - 1 if int(m.group(4)) >= da else int(m.group(4)))), parts[i])
+        return '"'.join(parts)
+    s1 = re.sub(r'<row r="(\d+)"[^>]*>.*?</row>', lambda m: "" if da <= int(m.group(1)) <= db else m.group(0), s1, flags=re.S)
+    s1 = re.sub(r'<row r="(\d+)"[^>]*>', lambda m: m.group(0) if int(m.group(1)) <= db else m.group(0).replace(f'r="{m.group(1)}"', f'r="{int(m.group(1)) - dk}"', 1), s1)
+    s1 = re.sub(r'<c r="([A-Z]+)(\d+)"', lambda m: m.group(0) if int(m.group(2)) <= db else f'<c r="{m.group(1)}{int(m.group(2)) - dk}"', s1)
+    s1 = re.sub(r"<f>(.*?)</f>", lambda m: "<f>" + del_text(m.group(1)) + "</f>", s1, flags=re.S)
+    s1 = re.sub(r'sqref="([^"]+)"', lambda m: 'sqref="' + del_text(m.group(1)) + '"', s1)
+    s1 = re.sub(r'<dimension ref="([^"]+)"', lambda m: '<dimension ref="' + del_text(m.group(1)) + '"', s1)
+    row_map = {o: (r - dk if r > db else (da - 1 if r >= da else r)) for o, r in row_map.items()}
+
 for blk in sorted(PLAN["insert"], key=lambda b: -b["before"]):
-    n, specs = blk["before"], blk["rows"]
+    b0 = blk["before"]
+    n, specs = row_map.get(b0, b0 - (dk if PLAN.get("delete") and b0 > PLAN["delete"][1] else 0)), blk["rows"]
     k = len(specs)
     s1 = re.sub(r'<row r="(\d+)"[^>]*>', lambda m: m.group(0) if int(m.group(1)) < n else m.group(0).replace(f'r="{m.group(1)}"', f'r="{int(m.group(1)) + k}"', 1), s1)
     s1 = re.sub(r'<c r="([A-Z]+)(\d+)"', lambda m: m.group(0) if int(m.group(2)) < n else f'<c r="{m.group(1)}{int(m.group(2)) + k}"', s1)
     s1 = re.sub(r"<f>(.*?)</f>", lambda m: "<f>" + shift_ref_text(m.group(1), n, k) + "</f>", s1, flags=re.S)
     s1 = re.sub(r'sqref="([^"]+)"', lambda m: 'sqref="' + re.sub(r"(?<=[A-Z])(\d{7,})", lambda q: str(min(int(q.group(1)), 1048576)), shift_ref_text(m.group(1), n, k)) + '"', s1)
     s1 = re.sub(r'<dimension ref="([^"]+)"', lambda m: '<dimension ref="' + shift_ref_text(m.group(1), n, k) + '"', s1)
-    m = re.search(rf'<row r="{n + k}"', s1)
+    m = re.search(rf'<row r="{n + k}"', s1) or next((x for x in re.finditer(r'<row r="(\d+)"', s1) if int(x.group(1)) >= n + k), None)
     s1 = s1[:m.start()] + "".join(row_xml(n + i, sp) for i, sp in enumerate(specs)) + s1[m.start():]
     row_map = {o: (r + k if r >= n else r) for o, r in row_map.items()}
 

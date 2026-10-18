@@ -35,7 +35,12 @@ RENAME = {
     "RCP DRAWINGS": "Reflected Ceiling Plans",
     "ID GENERAL ARRENGEMENT": "ID General Arrangement",
     "WATERPROOFING &INSULATION": "Waterproofing & Insulation",
+    "INTERIOR DESIGN (ID)": "Interior Design (ID)",
 }
+
+# 'COMMUNITY CENTER / <BUILDING>' headings start a one-column group (one ref per row, read from column D)
+CC = "COMMUNITY CENTER"
+CC_NAMES = {"GYM": "GYM", "CHANGING ROOM": "Changing Room", "COMMUNITY HALL": "Community Hall"}
 
 
 def nice(name):
@@ -87,9 +92,15 @@ def parse(ws, links, notes):
             name = " ".join(a.split())
             if name.upper() in ("TOTAL",):
                 break
-            if "/" in name:  # top-level discipline heading
+            if "/" in name and name.upper().startswith(CC):  # community center building -> one-column group
+                bld = name.split("/", 1)[1].strip().upper()
+                cur = {"g": "Community Center – " + CC_NAMES.get(bld, bld.title()), "one": True, "subs": []}
+                groups.append(cur)
+                sub = None
+            elif "/" in name:  # top-level discipline heading
                 cur = {"g": name.title().replace(" Shop Drawings", "").replace("Id", "ID").replace("Mep", "MEP"), "subs": []}
                 groups.append(cur)
+                sub = None
             else:
                 if cur is None:
                     cur = {"g": "Drawings", "subs": []}
@@ -102,7 +113,7 @@ def parse(ws, links, notes):
                 sub = {"s": "General", "items": []}
                 cur["subs"].append(sub)
             cells = []
-            for i, c in enumerate(range(4, 8)):
+            for i, c in enumerate(range(4, 5) if cur.get("one") else range(4, 8)):
                 cell = ws.cell(r, c)
                 v = "" if cell.value is None else str(cell.value).strip()
                 rgb = fill_rgb(cell)
@@ -128,8 +139,9 @@ def parse(ws, links, notes):
     # page-only fix: a repeated sub-section name (e.g. second ELEVATIONS block holding porcelain cladding)
     for g in groups:
         for s in g["subs"]:
-            seen_sub[s["s"]] = seen_sub.get(s["s"], 0) + 1
-            if seen_sub[s["s"]] > 1 and s["items"]:
+            key = g["g"] + "|" + s["s"] if g.get("one") else s["s"]
+            seen_sub[key] = seen_sub.get(key, 0) + 1
+            if seen_sub[key] > 1 and s["items"]:
                 s["s"] = s["items"][0]["d"].strip().title()
         g["subs"] = [s for s in g["subs"] if s["items"]]
     return groups, missing
@@ -167,7 +179,7 @@ def flatten(data):
         for s in g["subs"]:
             for it in s["items"]:
                 for i, c in enumerate(it["c"]):
-                    out[(it["d"], TYPES[i])] = c.get("ref") and (c["ref"], c["url"]) or (c.get("txt", ""), "")
+                    out[(g["g"] + " · " + it["d"] if g.get("one") else it["d"], "Ref" if g.get("one") else TYPES[i])] = c.get("ref") and (c["ref"], c["url"]) or (c.get("txt", ""), "")
     return out
 
 

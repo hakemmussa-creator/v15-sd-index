@@ -51,6 +51,8 @@ section.s h3 em{font-style:normal;font-weight:500;color:var(--muted);font-size:1
 .cells{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 @media (max-width:640px){.cells{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .only .cells{grid-template-columns:1fr}
+.cells.one,.only .cells.one{grid-template-columns:minmax(0,260px)}
+@media (max-width:640px){.cells.one{grid-template-columns:minmax(0,1fr)}}
 .c{border-radius:7px;padding:6px 8px;min-width:0;background:var(--quiet-bg);display:flex;flex-direction:column;gap:1px;text-decoration:none;color:var(--muted)}
 .c .ty{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
 .c .v{font-family:var(--f-mono);font-size:13px;overflow-wrap:anywhere}
@@ -256,8 +258,8 @@ let q = "", t = -1;
 const list = document.getElementById("list");
 const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const updKey = r => r.startsWith("SD-") ? r : "SD-" + r;
-function cell(c, i){
-  const ty = `<span class="ty">${TYPES[i]}${c.chk ? " · check" : ""}</span>`;
+function cell(c, i, lab){
+  const ty = `<span class="ty">${lab || TYPES[i]}${c.chk ? " · check" : ""}</span>`;
   if (c.ref){
     const st = stOf("SD-" + c.ref);
     const tip = ` title="${esc((c.chk ? c.chk + " — " : "") + (st ? st.label + " (Rev." + String(st.rev).padStart(2,"0") + ")" : "Open drawing folder"))}"`;
@@ -274,13 +276,13 @@ function render(){
     for (const s of g.subs){
       let ih = "", k = 0; const cnt = {ok:0, bad:0, ur:0};
       for (const it of s.items){
-        const hay = (it.d + " " + s.s + " " + it.c.map(c => c.ref ? c.ref + " " + P + c.ref : c.txt).join(" ")).toLowerCase();
+        const hay = (it.d + " " + s.s + " " + g.g + " " + it.c.map(c => c.ref ? c.ref + " " + P + c.ref : c.txt).join(" ")).toLowerCase();
         if (ql && !hay.includes(ql)) continue;
-        const cells = t >= 0 ? [[it.c[t], t]] : it.c.map((c, i) => [c, i]);
+        const cells = g.one ? [[it.c[0], 0]] : t >= 0 ? [[it.c[t], t]] : it.c.map((c, i) => [c, i]);
         if (sf && !cells.some(([c]) => c.ref && stMatch(stOf("SD-" + c.ref)))) continue;
         const seen = new Set();
         cells.forEach(([c]) => { if (c.ref && !seen.has(c.ref)) { seen.add(c.ref); const st = stOf("SD-" + c.ref); if (st && cnt[st.k] !== undefined) cnt[st.k]++; } });
-        ih += `<div class="it"><div class="d"><span class="n">${it.n}</span><span class="t">${esc(it.d)}</span></div><div class="cells">${cells.map(([c, i]) => cell(c, i)).join("")}</div></div>`;
+        ih += `<div class="it"><div class="d"><span class="n">${it.n}</span><span class="t">${esc(it.d)}</span></div><div class="cells${g.one ? " one" : ""}">${cells.map(([c, i]) => cell(c, i, g.one ? "Shop drawing" : "")).join("")}</div></div>`;
         k++;
       }
       if (k){
