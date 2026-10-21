@@ -9,7 +9,7 @@
 #dmupd tr.sep td{background:var(--quiet-bg);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:5px 10px}
 </style>
 <script>
-/* DM inspections panel. Reads the DM live-updates sheet (Drive, link-shared, read-only) every 10 minutes.
+/* DM inspections panel. Reads the DM live-updates sheet (Drive, link-shared, read-only) live: every 20 s while the page is open and on screen.
    Main tab (must stay the first tab): ASSIGNED inspections. "Updates log" tab: rows the skill appends (Date, Emaar No, Type, Stage, DM ref, Status). */
 const DMS = __DMS__;
 let DMC = null, DM_T = null;
@@ -22,8 +22,12 @@ function dmCSV(t){ const out=[]; let row=[], f="", q=false;
 function dmToday(){ return new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Dubai",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date()); }
 function dmDate(s){ s=String(s||"").trim(); let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if (m) return `${m[1]}-${m[2].padStart(2,"0")}-${m[3].padStart(2,"0")}`;
   m=s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/); if (m) return `${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`; return s; }
+let DM_BUSY = false;
 async function dmLoad(){
-  if (!DMC) return;
+  if (!DMC || DM_BUSY) return; DM_BUSY = true;
+  try { await dmLoad1(); } finally { DM_BUSY = false; }
+}
+async function dmLoad1(){
   const base = "https://docs.google.com/spreadsheets/d/"+DMC.id;
   const st = {at:new Date(), ok:true, assigned:[], approved:[]};
   try {
@@ -52,18 +56,19 @@ function renderDM(st){
   let body = "";
   if (st.assigned.length) body += `<tr class="sep"><td colspan="4">Assigned</td></tr>` + st.assigned.map(r=>row(r,"ur","Assigned")).join("");
   if (st.approved.length) body += `<tr class="sep"><td colspan="4">Approved today</td></tr>` + st.approved.map(r=>row(r,"ok","Approved")).join("");
-  if (!body) body = `<tr><td colspan="4" style="color:var(--muted)">${st.ok ? "No inspections assigned at the moment." : "Couldn't read the DM sheet – will try again in 10 minutes."}</td></tr>`;
+  if (!body) body = `<tr><td colspan="4" style="color:var(--muted)">${st.ok ? "No inspections assigned at the moment." : "Couldn't read the DM sheet – retrying…"}</td></tr>`;
   const t = st.at.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Dubai"});
   box.innerHTML=`<details class="ud"${open?" open":""}><summary><span class="pm" aria-hidden="true"></span><span class="lab">DM Inspections Updates</span><em>${st.assigned.length} assigned${st.approved.length?` · ${st.approved.length} approved today`:""} · <span class="live${st.ok?"":" err"}"><i></i>${st.ok?"live":"offline"} ${t}</span></em></summary>`
    +`<div class="ut-wrap"><table class="ut"><thead><tr><th>Emaar No</th><th>Type</th><th>Stage</th><th>Status</th></tr></thead><tbody>${body}</tbody></table></div>`
-   +`<div class="dmnote">Dubai Municipality inspections. Updates automatically every 10 minutes.</div></details>`;
+   +`<div class="dmnote">Dubai Municipality inspections. Live from the DM sheet.</div></details>`;
 }
 async function dmStart(pw){
   if (DMC || !DMS) return;
   try { const t = (window.crypto && crypto.subtle) ? await decWebCrypto(pw, DMS) : await decCJS(pw, DMS); if (t.startsWith("V15OK")) DMC = JSON.parse(t.slice(5)); } catch(e){}
   if (!DMC) return;
-  dmLoad(); clearInterval(DM_T); DM_T = setInterval(dmLoad, 10*60*1000);
+  dmLoad(); clearInterval(DM_T); DM_T = setInterval(() => { if (!document.hidden) dmLoad(); }, 20*1000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) dmLoad(); });
+  window.addEventListener("focus", dmLoad);
 }
 { const _u = unlock; unlock = async function(pw){ const ok = await _u(pw); if (ok) window.__dmpw = pw; return ok; };
   const _s = showApp; showApp = function(){ _s(); dmStart(window.__dmpw || store.get()); }; }
