@@ -191,6 +191,7 @@ details[open]>summary .pm::before{content:"−"}
     <span><i class="sw" style="background:var(--none-bg);border:1px solid var(--none)"></i>Not in submittal register</span>
   </div>
   <section id="upd" aria-label="Updates"></section>
+  <section id="dmupd" aria-label="DM inspections updates"></section>
   <main id="list"></main>
   <button id="out" type="button">Lock this device</button>
   </div>
@@ -342,5 +343,75 @@ function renderUpd(){
 }
 </script>
 
+<style>
+#dmupd{margin:6px 0 4px}
+#dmupd details.ud>summary .lab{font-weight:700}
+#dmupd .live{display:inline-flex;align-items:center;gap:5px}
+#dmupd .live i{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+#dmupd .live.err i{background:var(--bad)}
+#dmupd .dmnote{padding:8px 12px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line)}
+#dmupd td.v{font-family:var(--f-mono);font-weight:600;white-space:nowrap}
+#dmupd tr.sep td{background:var(--quiet-bg);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:5px 10px}
+</style>
+<script>
+/* DM inspections panel. Reads the DM live-updates sheet (Drive, link-shared, read-only) every 10 minutes.
+   Main tab (must stay the first tab): ASSIGNED inspections. "Updates log" tab: rows the skill appends (Date, Emaar No, Type, Stage, DM ref, Status). */
+const DMS = __DMS__;
+let DMC = null, DM_T = null;
+const DM_STAGES = [[5,"Foundation"],[7,"G1 – First floor"],[9,"F1 – Second floor"],[11,"R1 – Roof"],[13,"Boundary wall"]];
+function dmCSV(t){ const out=[]; let row=[], f="", q=false;
+  for (let i=0;i<t.length;i++){ const c=t[i];
+    if (q){ if (c==='"'){ if (t[i+1]==='"'){ f+='"'; i++; } else q=false; } else f+=c; }
+    else if (c==='"') q=true; else if (c===','){ row.push(f); f=""; } else if (c==='\n'){ row.push(f); out.push(row); row=[]; f=""; } else if (c!=='\r') f+=c; }
+  if (f!==""||row.length){ row.push(f); out.push(row); } return out; }
+function dmToday(){ return new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Dubai",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date()); }
+function dmDate(s){ s=String(s||"").trim(); let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if (m) return `${m[1]}-${m[2].padStart(2,"0")}-${m[3].padStart(2,"0")}`;
+  m=s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/); if (m) return `${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`; return s; }
+async function dmLoad(){
+  if (!DMC) return;
+  const base = "https://docs.google.com/spreadsheets/d/"+DMC.id;
+  const st = {at:new Date(), ok:true, assigned:[], approved:[]};
+  try {
+    const r = await fetch(base+"/export?format=csv"+(DMC.gid!=null?"&gid="+DMC.gid:""), {credentials:"omit", cache:"no-store"});
+    if (!r.ok) throw new Error(r.status);
+    const rows = dmCSV(await r.text());
+    for (const r2 of rows.slice(2)){ const v=(r2[3]||"").trim(); if (!/^[JK]-?\d+/i.test(v)) continue;
+      for (const [c,name] of DM_STAGES){ if ((r2[c+1]||"").trim().toUpperCase()==="ASSIGNED") st.assigned.push({v, ty:(r2[4]||"").trim(), st:name, ref:(r2[c]||"").trim()}); } }
+  } catch(e){ st.ok=false; }
+  if (DMC.log){ try {
+    const r = await fetch(base+"/gviz/tq?tqx=out:csv&headers=1&sheet="+encodeURIComponent(DMC.log), {credentials:"omit", cache:"no-store"});
+    if (r.ok){ const rows=dmCSV(await r.text()); const today=dmToday();
+      // a missing tab makes Google return the first tab instead - only trust a real log (header "Date")
+      if (!rows.length || (rows[0][0]||"").trim().toLowerCase()!=="date") rows.length=0;
+      for (const x of rows.slice(1)){ if (dmDate(x[0])===today && (x[5]||"").trim().toUpperCase()==="APPROVED") st.approved.push({v:(x[1]||"").trim(), ty:(x[2]||"").trim(), st:(x[3]||"").trim(), ref:(x[4]||"").trim()}); } }
+  } catch(e){} }
+  if (window.DM_PREVIEW_APPROVED && !st.approved.length) st.approved = window.DM_PREVIEW_APPROVED;
+  st.approved = st.approved.filter(a => !st.assigned.some(x => x.v===a.v && x.st===a.st));
+  renderDM(st);
+}
+function renderDM(st){
+  const box=document.getElementById("dmupd"); if(!box) return;
+  const e=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const open = box.querySelector("details") && box.querySelector("details").open;
+  const row = (r,k,l)=>`<tr><td class="v">${e(r.v)}</td><td>${e(r.ty)}</td><td>${e(r.st)}</td><td><span class="pill st-${k}">${l}</span></td></tr>`;
+  let body = "";
+  if (st.assigned.length) body += `<tr class="sep"><td colspan="4">Assigned</td></tr>` + st.assigned.map(r=>row(r,"ur","Assigned")).join("");
+  if (st.approved.length) body += `<tr class="sep"><td colspan="4">Approved today</td></tr>` + st.approved.map(r=>row(r,"ok","Approved")).join("");
+  if (!body) body = `<tr><td colspan="4" style="color:var(--muted)">${st.ok ? "No inspections assigned at the moment." : "Couldn't read the DM sheet – will try again in 10 minutes."}</td></tr>`;
+  const t = st.at.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Dubai"});
+  box.innerHTML=`<details class="ud"${open?" open":""}><summary><span class="pm" aria-hidden="true"></span><span class="lab">DM Inspections Updates</span><em>${st.assigned.length} assigned${st.approved.length?` · ${st.approved.length} approved today`:""} · <span class="live${st.ok?"":" err"}"><i></i>${st.ok?"live":"offline"} ${t}</span></em></summary>`
+   +`<div class="ut-wrap"><table class="ut"><thead><tr><th>Emaar No</th><th>Type</th><th>Stage</th><th>Status</th></tr></thead><tbody>${body}</tbody></table></div>`
+   +`<div class="dmnote">Dubai Municipality inspections. Updates automatically every 10 minutes.</div></details>`;
+}
+async function dmStart(pw){
+  if (DMC || !DMS) return;
+  try { const t = (window.crypto && crypto.subtle) ? await decWebCrypto(pw, DMS) : await decCJS(pw, DMS); if (t.startsWith("V15OK")) DMC = JSON.parse(t.slice(5)); } catch(e){}
+  if (!DMC) return;
+  dmLoad(); clearInterval(DM_T); DM_T = setInterval(dmLoad, 10*60*1000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) dmLoad(); });
+}
+{ const _u = unlock; unlock = async function(pw){ const ok = await _u(pw); if (ok) window.__dmpw = pw; return ok; };
+  const _s = showApp; showApp = function(){ _s(); dmStart(window.__dmpw || store.get()); }; }
+</script>
 </body>
 </html>

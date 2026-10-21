@@ -219,13 +219,16 @@ def main():
         report["changes"] = diff(decrypt_page(a.old, pw), data)
     old_upd = "null"
     old_sta = "null"
+    old_dms = "null"
     if a.old and os.path.exists(a.old):
         m = re.search(r"const UPD = (\{.*?\}|null);", open(a.old, encoding="utf-8").read(), re.S)
         old_upd = m.group(1) if m else "null"
         m2 = re.search(r"const STA = (\{.*?\}|null);", open(a.old, encoding="utf-8").read(), re.S)
         old_sta = m2.group(1) if m2 else "null"
+        m3 = re.search(r"const DMS = (\{.*?\}|null);", open(a.old, encoding="utf-8").read(), re.S)
+        old_dms = m3.group(1) if m3 else "null"
     tpl = open(os.path.join(HERE, "page_template.html"), encoding="utf-8").read()
-    html = tpl.replace("__ENC__", json.dumps(encrypt(data, pw))).replace("__UPDATED__", a.updated).replace("__UPD__", old_upd).replace("__STA__", old_sta)
+    html = tpl.replace("__ENC__", json.dumps(encrypt(data, pw))).replace("__UPDATED__", a.updated).replace("__UPD__", old_upd).replace("__STA__", old_sta).replace("__DMS__", old_dms)
     assert "drive.google" not in html
     open(a.out, "w", encoding="utf-8").write(html)
     if a.report:
