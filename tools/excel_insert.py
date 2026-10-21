@@ -33,7 +33,12 @@ X = tempfile.mkdtemp()
 zipfile.ZipFile(SRC).extractall(X)
 P = lambda p: os.path.join(X, p)
 rd = lambda p: open(P(p), encoding="utf-8").read()
-wr = lambda p, t: open(P(p), "w", encoding="utf-8").write(t)
+def wr(p, t):
+    # Rows we add carry x14ac:dyDescent; a sheet re-saved by another app may not declare that prefix,
+    # which makes the whole file unreadable ("unbound prefix"). Drop the attribute in that case.
+    if "x14ac:" in t and "xmlns:x14ac" not in t[:3000]:
+        t = t.replace(' x14ac:dyDescent="0.25"', "")
+    open(P(p), "w", encoding="utf-8").write(t)
 DRV, PRE = "https://drive.google.com/drive/folders/", "GPD-V15-QTGC-"
 F = PLAN["folders"]
 LINK_S, STATUS_S = 54, 27

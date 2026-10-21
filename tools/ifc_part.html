@@ -1,0 +1,184 @@
+<style>
+/* IFC tab: focus tree. Ancestors stack above, the tapped node sits in the middle of the screen, its branches hang below. */
+.nav2{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.nav2 a{font-size:13px;color:var(--brand-ink);opacity:.9}
+.note{margin:12px 0 0;padding:9px 12px;border-radius:8px;background:var(--flag-bg);color:var(--flag);font-size:13px}
+.stage{--ind:20px;--sp:12px;max-width:640px;margin:0 auto;padding:18px 0 45vh}
+.lvl{position:relative;padding-left:calc(var(--d) * var(--ind))}
+.lvl.sub::before{content:"";position:absolute;left:calc((var(--d) - 1) * var(--ind) + var(--sp) - 1px);top:-15px;height:var(--cy,30px);width:var(--ind);border-left:2px solid var(--line);border-bottom:2px solid var(--line);border-bottom-left-radius:9px;box-sizing:border-box}
+.lvl.fo{--cy:56px}
+/* trail = ancestors, going up */
+.anc{position:relative;display:flex;align-items:center;gap:8px;width:100%;height:30px;text-align:left;font:inherit;font-size:13.5px;font-weight:600;color:var(--muted);background:none;border:0;padding:0 0 0 calc(var(--sp) + 12px);cursor:pointer}
+.anc i{position:absolute;left:calc(var(--sp) - 5px);top:10px;width:10px;height:10px;border-radius:50%;background:var(--paper);border:2px solid var(--muted);box-sizing:border-box}
+.anc span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.anc:hover span,.anc:focus-visible span{color:var(--link);text-decoration:underline}
+.anc:focus-visible{outline:2px solid var(--link);outline-offset:2px;border-radius:6px}
+.anc em{font-style:normal;font-weight:500;font-size:12px;opacity:.8;margin-left:auto;padding-left:8px;white-space:nowrap}
+@media (max-width:560px){.anc em{display:none}}
+.jump{grid-column:1/-1;font:inherit;font-size:12px;color:var(--link);background:none;border:0;padding:0;text-align:left;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+/* focus card */
+.focus{position:relative;margin:10px 0 0;padding-left:var(--sp)}
+.focus .card{background:var(--brand);color:var(--brand-ink);border-radius:14px;padding:16px 16px 14px;box-shadow:0 6px 22px rgba(15,59,71,.25)}
+.focus small{display:block;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;opacity:.75}
+.focus h2{margin:2px 0 8px;font-size:21px;line-height:1.2;text-wrap:balance;overflow-wrap:anywhere}
+.focus .meta{display:flex;flex-wrap:wrap;gap:6px;font-size:12.5px}
+.focus .meta span{background:rgba(255,255,255,.14);border-radius:999px;padding:2px 9px}
+.focus .acts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.focus .acts a,.focus .acts button{font:inherit;font-size:13px;font-weight:600;border-radius:8px;padding:6px 11px;border:1px solid rgba(255,255,255,.35);background:transparent;color:var(--brand-ink);text-decoration:none;cursor:pointer}
+.focus .acts .off{opacity:.55;cursor:default}
+@media (prefers-reduced-motion:no-preference){.focus .card{animation:pop .28s ease-out}.kids,.files{animation:fade .3s ease-out}
+@keyframes pop{from{transform:translateY(18px) scale(.97);opacity:.4}to{transform:none;opacity:1}}@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}
+/* branches */
+.kids{position:relative;margin:0 0 0 calc(var(--sp) + 22px);padding:6px 0 0;list-style:none}
+.kids::before{content:"";position:absolute;left:0;top:0;height:6px;border-left:2px solid var(--line)}
+.kids li{position:relative;padding:5px 0 5px 26px}
+.kids li::before{content:"";position:absolute;left:0;top:0;bottom:0;border-left:2px solid var(--line)}
+.kids li:last-child::before{bottom:50%}
+.kids li::after{content:"";position:absolute;left:0;top:50%;width:20px;border-top:2px solid var(--line)}
+.br{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font:inherit;background:var(--sheet);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.br:hover{border-color:var(--link);background:var(--link-bg)}
+.br:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+.br .ic{width:30px;height:30px;border-radius:8px;flex:none;display:grid;place-items:center;background:var(--link-bg);color:var(--link);font:700 12px/1 var(--f-mono)}
+.br .tx{min-width:0;flex:1}
+.br b{display:block;font-weight:600;overflow-wrap:anywhere}
+.br .ct{display:block;font-size:12px;color:var(--muted);margin-top:1px}
+.br .go{color:var(--muted);font:600 18px/1 var(--f-mono)}
+/* drawings (leaves) */
+.files{margin:14px 0 0 calc(var(--sp) + 22px);background:var(--sheet);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.files h3{margin:0;padding:10px 12px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line)}
+.files h3 .chips{margin-left:auto}
+.files h3 .chip{font-size:12px;padding:3px 9px;text-transform:none;letter-spacing:0}
+.dw{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:9px 12px;border-top:1px solid var(--line)}
+.dw:first-of-type{border-top:0}
+.dw.hl{background:var(--flag-bg)}
+.dw .nm{font-family:var(--f-mono);font-size:12.5px;overflow-wrap:anywhere;min-width:0}
+.dw .pth{grid-column:1/-1;font-size:12px;color:var(--muted)}
+.fx{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.fx a,.fx span{font:600 11.5px/1 var(--f-mono);padding:6px 8px;border-radius:6px;text-decoration:none;white-space:nowrap}
+.fx .pdf{background:var(--bad-bg);color:var(--bad)}
+.fx .dwg{background:var(--link-bg);color:var(--link)}
+.fx .oth{background:var(--quiet-bg);color:var(--ink)}
+.fx span{opacity:.6;cursor:default}
+.fx small{font:500 10.5px/1 var(--f-ui);opacity:.8;margin-left:4px}
+.more{display:block;width:100%;font:inherit;font-size:13px;font-weight:600;padding:9px;border:0;border-top:1px solid var(--line);background:var(--quiet-bg);color:var(--link);cursor:pointer}
+#res{max-width:640px;margin:12px auto 0}
+#res .files{margin-left:0}
+.empty{padding:22px 12px;text-align:center;color:var(--muted)}
+@media (max-width:560px){.stage{--ind:12px}.focus h2{font-size:19px}.dw{grid-template-columns:1fr}.fx{justify-content:flex-start}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  __HEADER__
+  <section class="lock" id="lock">
+    <form id="lf" autocomplete="off">
+      <h2>Private index</h2>
+      <p>Enter the password to open the IFC drawing package.</p>
+      <label for="pw">Password</label>
+      <input id="pw" type="password" required autocomplete="current-password">
+      <div style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted)"><input id="rem" type="checkbox" checked><label for="rem" style="text-transform:none;letter-spacing:0;font-size:13.5px">Remember on this device</label></div>
+      <button id="go" type="submit">Open IFC package</button>
+      <div class="err" id="err" role="alert"></div>
+    </form>
+  </section>
+  <div id="app" hidden>
+    <div class="bar">
+      <input id="q" type="search" placeholder="Search drawing no. or name (e.g. 1100, ELEVATION, CCTV)" autocomplete="off">
+    </div>
+    __NOTE__
+    <div id="res" hidden></div>
+    <div class="stage" id="stage" aria-live="polite"></div>
+    <footer>IFC package as issued – fixed set, not updated. <button id="out" type="button">Lock this device</button></footer>
+  </div>
+</div>
+<script>
+const ENC = __ENC__;
+const LS = "v15ifc-key", LS_OTHER = ["v15sd-key","v15sub-key"];
+let T = null, FOCUS = [], SHOW = 40, FT = "";
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function decWebCrypto(pw,E){
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey({name:"PBKDF2", salt:b64(E.s), iterations:E.n, hash:"SHA-256"}, base, {name:"AES-CBC", length:256}, false, ["decrypt"]);
+  return new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-CBC", iv:b64(E.i)}, key, b64(E.c)));
+}
+function loadCJS(){ return new Promise((ok,bad)=>{ if (window.CryptoJS) return ok(); const s=document.createElement("script");
+  s.src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"; s.onload=ok; s.onerror=()=>bad(new Error("offline")); document.head.appendChild(s); }); }
+async function decCJS(pw,E){ await loadCJS(); const C=window.CryptoJS;
+  const key=C.PBKDF2(pw,C.enc.Base64.parse(E.s),{keySize:8,iterations:E.n,hasher:C.algo.SHA256});
+  return C.AES.decrypt({ciphertext:C.enc.Base64.parse(E.c)},key,{iv:C.enc.Base64.parse(E.i),mode:C.mode.CBC,padding:C.pad.Pkcs7}).toString(C.enc.Utf8); }
+async function unlock(pw){
+  let txt=""; try { txt = (window.crypto && crypto.subtle) ? await decWebCrypto(pw,ENC) : await decCJS(pw,ENC); } catch(e){ if (e && e.message==="offline") throw e; }
+  if (!txt.startsWith("V15OK")) return false;
+  T = JSON.parse(txt.slice(5)); index(T, []); return true;
+}
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(v){try{localStorage.setItem(LS,v)}catch(e){}},del(){try{localStorage.removeItem(LS)}catch(e){}}};
+document.getElementById("lf").addEventListener("submit", async e => {
+  e.preventDefault(); const pw=document.getElementById("pw").value, btn=document.getElementById("go"), err=document.getElementById("err");
+  btn.disabled=true; btn.textContent="Checking…"; err.textContent="";
+  try { if (await unlock(pw)) { if (document.getElementById("rem").checked) store.set(pw); start(); } else err.textContent="Wrong password. Check it and try again."; }
+  catch(x){ err.textContent="Couldn't open the index. Check your internet connection and try again."; }
+  btn.disabled=false; btn.textContent="Open IFC package";
+});
+document.getElementById("out").addEventListener("click",()=>{store.del();location.reload();});
+(async()=>{ for (const k of [LS, ...LS_OTHER]) { const s=store.get(k); if (!s) continue; try { if (await unlock(s)) { if (k!==LS) store.set(s); start(); return; } } catch(e){} } })();
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ALL = [];   // flat list of drawings for search: {f, path:[nodes]}
+function index(n, path){ n._p = path; for (const f of n.f) ALL.push({f, n}); for (const d of n.d) index(d, path.concat([d])); }
+function nodeAt(path){ let n=T; for (const i of path) n=n.d[i]; return n; }
+const mb = s => s>=1048576 ? (s/1048576).toFixed(s>=10485760?0:1)+" MB" : Math.max(1,Math.round(s/1024))+" KB";
+function counts(c){ const o=[]; const tot=Object.values(c).reduce((a,b)=>a+b,0);
+  if (c.pdf) o.push(c.pdf+" PDF"); if (c.dwg) o.push(c.dwg+" DWG"); const rest=tot-(c.pdf||0)-(c.dwg||0); if (rest) o.push(rest+" other"); return o; }
+function initials(n){ const m=n.match(/^(\d+)/); if (m) return m[1].slice(0,4); return n.replace(/[^A-Za-z0-9 ]/g," ").trim().split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase(); }
+function link(e,x,cls){ const lab=e.toUpperCase()+`<small>${mb(x.s)}</small>`;
+  return x.u ? `<a class="${cls}" href="${esc(x.u)}" target="_blank" rel="noopener">${lab}</a>` : `<span class="${cls}" title="Drive link added after upload">${lab}</span>`; }
+function dwRow(f, withPath, n){
+  const ex=Object.keys(f.x).sort((a,b)=>(a==="pdf"?0:a==="dwg"?1:2)-(b==="pdf"?0:b==="dwg"?1:2));
+  return `<div class="dw" data-t="${esc(f.t)}"><div class="nm">${esc(f.t)}</div><div class="fx">${ex.map(e=>link(e,f.x[e],e==="pdf"?"pdf":e==="dwg"?"dwg":"oth")).join("")}</div>`+
+    (withPath ? `<button class="jump" data-go="${n._p.map(p=>T._i(p)).join(",")}"><span>${esc(["IFC"].concat(n._p.map(p=>p.n)).join(" › "))}</span></button>` : "")+`</div>`;
+}
+function render(scroll){
+  const st=document.getElementById("stage"), n=nodeAt(FOCUS), chain=[T]; let c=T;
+  for (const i of FOCUS){ c=c.d[i]; chain.push(c); }
+  let h="";
+  chain.slice(0,-1).forEach((a,d)=>{ h+=`<div class="lvl${d?" sub":""}" style="--d:${d}"><button class="anc" data-up="${d}"><i></i><span>${esc(a.n)}</span><em>${counts(a.cnt).join(" · ")}</em></button></div>`; });
+  const d=FOCUS.length, href=n.u ? `<a href="${esc(n.u)}" target="_blank" rel="noopener">Open folder in Drive ↗</a>` : `<span class="off" title="Drive link added after upload">Drive folder · after upload</span>`;
+  h+=`<div class="lvl fo${d?" sub":""}" style="--d:${d}"><div class="focus" id="focus"><div class="card"><small>${d===0?"Cluster Montura V15 · IFC":"Level "+d+" · "+esc(chain[1].n)}</small><h2>${esc(n.n)}</h2>
+     <div class="meta">${n.d.length?`<span>${n.d.length} branch${n.d.length>1?"es":""}</span>`:""}${counts(n.cnt).map(x=>`<span>${x}</span>`).join("")}</div>
+     <div class="acts">${d?`<button type="button" data-up="${d-1}">↑ Up one level</button>`:""}${href}</div></div></div>`;
+  if (n.d.length){ h+=`<ul class="kids">`+n.d.map((k,i)=>`<li><button class="br" data-down="${i}"><span class="ic">${esc(initials(k.n))}</span><span class="tx"><b>${esc(k.n)}</b><span class="ct">${k.d.length?k.d.length+" branches · ":""}${counts(k.cnt).join(" · ")}</span></span><span class="go">›</span></button></li>`).join("")+`</ul>`; }
+  if (n.f.length){ const has=t=>n.f.some(f=>f.x[t]);
+    const fl=n.f.filter(f=>!FT||f.x[FT]);
+    h+=`<div class="files"><h3>Drawings · ${n.f.length}<span class="chips">${["","pdf","dwg"].filter(t=>!t||has(t)).map(t=>`<button class="chip" data-ft="${t}" aria-pressed="${FT===t}">${t?t.toUpperCase():"All"}</button>`).join("")}</span></h3>`+
+       fl.slice(0,SHOW).map(f=>dwRow(f)).join("")+(fl.length>SHOW?`<button class="more" data-more>Show all ${fl.length}</button>`:"")+`</div>`; }
+  h+=`</div>`;
+  st.innerHTML=h;
+  if (scroll!==false) requestAnimationFrame(()=>{ const f=document.getElementById("focus"); if(f) f.scrollIntoView({block:"center",behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"}); });
+  try{ history.replaceState(null,"","#"+FOCUS.join(".")); }catch(e){}
+}
+document.getElementById("stage").addEventListener("click", e => {
+  const b=e.target.closest("button"); if (!b) return;
+  if (b.dataset.down!==undefined){ FOCUS=FOCUS.concat([+b.dataset.down]); SHOW=40; FT=""; render(); }
+  else if (b.dataset.up!==undefined){ FOCUS=FOCUS.slice(0,+b.dataset.up); SHOW=40; FT=""; render(); }
+  else if (b.dataset.ft!==undefined){ FT=b.dataset.ft; SHOW=40; render(false); }
+  else if (b.dataset.more!==undefined){ SHOW=1e9; render(false); }
+});
+const qi=document.getElementById("q"), res=document.getElementById("res");
+qi.addEventListener("input",()=>{ const q=qi.value.trim().toLowerCase(); if (q.length<2){ res.hidden=true; res.innerHTML=""; return; }
+  const words=q.split(/\s+/); const hits=ALL.filter(a=>{ const s=(a.f.t+" "+a.n._p.map(p=>p.n).join(" ")).toLowerCase(); return words.every(w=>s.includes(w)); });
+  res.hidden=false;
+  res.innerHTML=`<div class="files"><h3>${hits.length} result${hits.length===1?"":"s"}</h3>`+(hits.length?hits.slice(0,60).map(a=>dwRow(a.f,true,a.n)).join(""):`<div class="empty">No drawing matches “${esc(qi.value)}”.</div>`)+(hits.length>60?`<div class="empty">Showing first 60 – add another word to narrow it.</div>`:"")+`</div>`;
+});
+res.addEventListener("click", e => { const b=e.target.closest("[data-go]"); if (!b) return; const row=b.closest(".dw"), t=row.dataset.t;
+  FOCUS=b.dataset.go?b.dataset.go.split(",").map(Number):[]; FT=""; SHOW=1e9; qi.value=""; res.hidden=true; render();
+  setTimeout(()=>{ const r=[...document.querySelectorAll("#stage .dw")].find(x=>x.dataset.t===t); if(r){ r.classList.add("hl"); r.scrollIntoView({block:"center",behavior:"smooth"}); } },350); });
+function start(){
+  T._i = p => { const par = p._par; return par.d.indexOf(p); };
+  (function setPar(n){ for (const d of n.d){ d._par=n; setPar(d); } })(T);
+  document.getElementById("lock").hidden=true; document.getElementById("app").hidden=false;
+  const h=(location.hash||"").slice(1); if (h){ try{ const p=h.split(".").map(Number); nodeAt(p).n; FOCUS=p; }catch(e){ FOCUS=[]; } }
+  render(!!h);
+}
+</script>
+</body>
+</html>
