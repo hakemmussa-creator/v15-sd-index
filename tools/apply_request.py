@@ -10,7 +10,8 @@ publish/request.json:
    "sub_add": [{"ref": "GPD-V15-QTGC-MAS-ARC-099", "rev": "Rev.00", "title": "...", "url": "drive folder url"}],
    "updates_index": {d,label,items} | null,   # same format as tools/add_updates.py
    "updates_sub":   {d,label,items} | null,
-   "status": {"MAS-ARC-099": ["U", 0], ...}}  # only new/changed keys; merged into the stored map
+   "status": {"MAS-ARC-099": ["U", 0], ...},  # only new/changed keys; merged into the stored map
+   "patch": [{"file": "index.html", "old": "...", "new": "..."}]}  # plain-text code fix; old must match exactly once
 Missing keys = nothing to do for that part. SD rows new to index.html are NOT handled here (they need the
 Excel); those still go through the normal build_page.py route.
 """
@@ -72,6 +73,16 @@ def main():
         p = os.path.join(tmp, "status.json"); json.dump(sta, open(p, "w"))
         run(["tools/set_status.py", "index.html", p], {"PAGE_PASSWORD": sdpw})
         run(["tools/set_status.py", "submittals.html", p], {"PAGE_PASSWORD": subpw})
+    for p in req.get("patch") or []:
+        if p["file"] not in ("index.html", "submittals.html", "ifc.html"):
+            sys.exit("patch: file not allowed: %s" % p["file"])
+        f = os.path.join(ROOT, p["file"]); t = open(f, encoding="utf-8").read()
+        n = t.count(p["old"])
+        if n != 1:
+            sys.exit("patch: old text found %d times in %s" % (n, p["file"]))
+        open(f, "w", encoding="utf-8").write(t.replace(p["old"], p["new"]))
+        print("patched", p["file"])
+
     print("request", req.get("id"), "applied")
 
 

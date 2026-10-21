@@ -46,6 +46,9 @@ async function dmLoad1(){
   } catch(e){} }
   if (window.DM_PREVIEW_APPROVED && !st.approved.length) st.approved = window.DM_PREVIEW_APPROVED;
   st.approved = st.approved.filter(a => !st.assigned.some(x => x.v===a.v && x.st===a.st));
+  // a repeated instruction (same villa + stage) is shown once
+  const dmOnce = l => { const s=new Set(); return l.filter(a => { const k=a.v.toUpperCase()+"|"+a.st; if (s.has(k)) return false; s.add(k); return true; }); };
+  st.assigned = dmOnce(st.assigned); st.approved = dmOnce(st.approved);
   renderDM(st);
 }
 function renderDM(st){

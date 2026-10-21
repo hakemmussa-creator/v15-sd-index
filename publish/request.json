@@ -1,0 +1,10 @@
+{
+ "id": "2026-10-21 DM panel - show repeated instruction once",
+ "patch": [
+  {
+   "file": "index.html",
+   "old": "  st.approved = st.approved.filter(a => !st.assigned.some(x => x.v===a.v && x.st===a.st));\n",
+   "new": "  st.approved = st.approved.filter(a => !st.assigned.some(x => x.v===a.v && x.st===a.st));\n  // a repeated instruction (same villa + stage) is shown once\n  const dmOnce = l => { const s=new Set(); return l.filter(a => { const k=a.v.toUpperCase()+\"|\"+a.st; if (s.has(k)) return false; s.add(k); return true; }); };\n  st.assigned = dmOnce(st.assigned); st.approved = dmOnce(st.approved);\n"
+  }
+ ]
+}
