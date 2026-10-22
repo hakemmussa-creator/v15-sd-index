@@ -11,9 +11,12 @@ publish/request.json:
    "updates_index": {d,label,items} | null,   # same format as tools/add_updates.py
    "updates_sub":   {d,label,items} | null,
    "status": {"MAS-ARC-099": ["U", 0], ...},  # only new/changed keys; merged into the stored map
-   "patch": [{"file": "index.html", "old": "...", "new": "..."}]}  # plain-text code fix; old must match exactly once
-Missing keys = nothing to do for that part. SD rows new to index.html are NOT handled here (they need the
-Excel); those still go through the normal build_page.py route.
+   "patch": [{"file": "index.html", "old": "...", "new": "..."}],  # plain-text code fix; old must match exactly once
+   "sd_data": {"enc": {s,i,n,c}, "updated": "22 Oct 2026"}}   # full SD index rows (from the Google Sheet)
+Missing keys = nothing to do for that part.
+sd_data: the whole index.html row data (the ENC structure build_page.py makes), zlib-compressed, base64'd as
+{"z": "..."} and encrypted with the SD page password (tools/make_sd_data.py builds it from the sheet export).
+It replaces the page's ENC block, so new SD refs / moved refs / new rows publish without uploading index.html.
 """
 import csv, json, os, re, subprocess, sys, tempfile
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -38,6 +41,24 @@ def main():
     req = json.load(open(req_path, encoding="utf-8"))
     sdpw, subpw = os.environ["SD_PASSWORD"], os.environ["SUB_PASSWORD"]
     tmp = tempfile.mkdtemp()
+
+    if req.get("sd_data"):
+        import base64, zlib
+        inner = dec(req["sd_data"]["enc"], sdpw)
+        data = json.loads(zlib.decompress(base64.b64decode(inner["z"])).decode("utf-8"))
+        if not isinstance(data, list) or not data or "subs" not in data[0]:
+            sys.exit("sd_data: unexpected structure")
+        n_items = sum(len(s["items"]) for g in data for s in g["subs"])
+        t = open(IDX, encoding="utf-8").read()
+        m = re.search(r"const ENC = (\{.*?\});", t, re.S)
+        old_items = sum(len(s["items"]) for g in dec(json.loads(m.group(1)), sdpw) for s in g["subs"])
+        if n_items < old_items * 0.9:
+            sys.exit("sd_data: item count dropped %d -> %d, refusing" % (old_items, n_items))
+        t = t[:m.start(1)] + json.dumps(bs.encrypt(data, sdpw)) + t[m.end(1):]
+        if req["sd_data"].get("updated"):
+            t = re.sub(r"(· Updated )[^.<]+(\.<br>)", lambda x: x.group(1) + req["sd_data"]["updated"] + x.group(2), t, count=1)
+        open(IDX, "w", encoding="utf-8").write(t)
+        print("sd_data: index rows replaced (%d -> %d items)" % (old_items, n_items))
 
     if req.get("sub_add"):
         old = bs.decrypt_page(SUB, subpw)
