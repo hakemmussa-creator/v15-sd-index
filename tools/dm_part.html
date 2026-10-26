@@ -29,13 +29,13 @@ async function dmLoad(){
 }
 async function dmLoad1(){
   const base = "https://docs.google.com/spreadsheets/d/"+DMC.id;
-  const st = {at:new Date(), ok:true, assigned:[], approved:[]};
+  const st = {at:new Date(), ok:true, assigned:[], rejected:[], approved:[]};
   try {
     const r = await fetch(base+"/export?format=csv"+(DMC.gid!=null?"&gid="+DMC.gid:""), {credentials:"omit", cache:"no-store"});
     if (!r.ok) throw new Error(r.status);
     const rows = dmCSV(await r.text());
     for (const r2 of rows.slice(2)){ const v=(r2[3]||"").trim(); if (!/^[JK]-?\d+/i.test(v)) continue;
-      for (const [c,name] of DM_STAGES){ if ((r2[c+1]||"").trim().toUpperCase()==="ASSIGNED") st.assigned.push({v, ty:(r2[4]||"").trim(), st:name, ref:(r2[c]||"").trim()}); } }
+      for (const [c,name] of DM_STAGES){ const s=(r2[c+1]||"").trim().toUpperCase(), o={v, ty:(r2[4]||"").trim(), st:name, ref:(r2[c]||"").trim()}; if (s==="ASSIGNED") st.assigned.push(o); else if (s==="REJECTED") st.rejected.push(o); } }
   } catch(e){ st.ok=false; }
   if (DMC.log){ try {
     const r = await fetch(base+"/gviz/tq?tqx=out:csv&headers=1&sheet="+encodeURIComponent(DMC.log), {credentials:"omit", cache:"no-store"});
@@ -58,10 +58,11 @@ function renderDM(st){
   const row = (r,k,l)=>`<tr><td class="v">${e(r.v)}</td><td>${e(r.ty)}</td><td>${e(r.st)}</td><td><span class="pill st-${k}">${l}</span></td></tr>`;
   let body = "";
   if (st.assigned.length) body += `<tr class="sep"><td colspan="4">Assigned</td></tr>` + st.assigned.map(r=>row(r,"ur","Assigned")).join("");
+  if (st.rejected.length) body += `<tr class="sep"><td colspan="4">Rejected – awaiting re-inspection</td></tr>` + st.rejected.map(r=>row(r,"bad","Rejected")).join("");
   if (st.approved.length) body += `<tr class="sep"><td colspan="4">Approved today</td></tr>` + st.approved.map(r=>row(r,"ok","Approved")).join("");
   if (!body) body = `<tr><td colspan="4" style="color:var(--muted)">${st.ok ? "No inspections assigned at the moment." : "Couldn't read the DM sheet – retrying…"}</td></tr>`;
   const t = st.at.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Dubai"});
-  box.innerHTML=`<details class="ud"${open?" open":""}><summary><span class="pm" aria-hidden="true"></span><span class="lab">DM Inspections Updates</span><em>${st.assigned.length} assigned${st.approved.length?` · ${st.approved.length} approved today`:""} · <span class="live${st.ok?"":" err"}"><i></i>${st.ok?"live":"offline"} ${t}</span></em></summary>`
+  box.innerHTML=`<details class="ud"${open?" open":""}><summary><span class="pm" aria-hidden="true"></span><span class="lab">DM Inspections Updates</span><em>${st.assigned.length} assigned${st.rejected.length?` · ${st.rejected.length} rejected`:""}${st.approved.length?` · ${st.approved.length} approved today`:""} · <span class="live${st.ok?"":" err"}"><i></i>${st.ok?"live":"offline"} ${t}</span></em></summary>`
    +`<div class="ut-wrap"><table class="ut"><thead><tr><th>Emaar No</th><th>Type</th><th>Stage</th><th>Status</th></tr></thead><tbody>${body}</tbody></table></div>`
    +`<div class="dmnote">Dubai Municipality inspections. Live from the DM sheet.</div></details>`;
 }
