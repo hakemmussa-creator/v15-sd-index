@@ -1,7 +1,9 @@
 {
- "id": "2026-11-01-0745",
- "sd": "no change",
- "updates_sub": 3,
- "status": 3,
+ "id": "2026-11-02-0816",
+ "sd": "4 cells changed (200 -> 200 items)",
+ "updates_index": 4,
+ "updates_sub": 2,
+ "status": 6,
+ "sub_add": 2,
  "ok": true
 }
