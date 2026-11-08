@@ -18,6 +18,8 @@ No project data is stored in this file (the repo is public).
 import argparse, json, re, sys
 from datetime import date, datetime
 
+import reportlab.rl_config as _rlc
+_rlc.useA85 = 0  # smaller files (plain Flate streams)
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4, landscape
