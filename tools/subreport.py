@@ -20,12 +20,12 @@ from datetime import date, datetime
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.graphics.shapes import Drawing, Rect
-from reportlab.platypus import (KeepInFrame, PageBreak, Paragraph, SimpleDocTemplate,
-                                Spacer, Table, TableStyle)
+from reportlab.platypus import (BaseDocTemplate, Frame, KeepInFrame, NextPageTemplate, PageBreak,
+                                PageTemplate, Paragraph, Spacer, Table, TableStyle)
 
 NAVY = colors.HexColor("#1F3864")
 LIGHT = colors.HexColor("#D9E1F2")
@@ -133,7 +133,7 @@ def P(txt, st):
     return Paragraph(txt, st)
 
 
-def bar(n, tot, w=70, h=7):
+def bar(n, tot, w=60, h=7):
     d = Drawing(w, h)
     x = 0
     for k in ("ok", "re", "ur", "ns"):
@@ -146,9 +146,121 @@ def bar(n, tot, w=70, h=7):
     return d
 
 
+NPAGES = [2]
+LTOP = 20 * mm
+SC = {"ok": "ok", "re": "re", "ur": "ur"}
+
+
+def deco_land(c, doc):
+    LW, LH = landscape(A4)
+    c.saveState()
+    c.setFillColor(NAVY)
+    c.rect(0, LH - LTOP + 4 * mm, LW, LTOP - 4 * mm, stroke=0, fill=1)
+    c.setFillColor(colors.white)
+    c.setFont("Helvetica-Bold", 10.5)
+    c.drawString(10 * mm, LH - 10.5 * mm, "GRAND POLO CLUB & RESORT – CLUSTER MONTURA (V15)")
+    c.setFont("Helvetica", 8)
+    c.drawString(10 * mm, LH - 14.5 * mm, "SUBCONTRACTOR SUBMITTALS STATUS – ATTACHMENTS")
+    c.drawRightString(LW - 10 * mm, LH - 10.5 * mm, "QUMRA")
+    c.setStrokeColor(colors.HexColor("#808080"))
+    c.setLineWidth(0.4)
+    c.line(10 * mm, 11 * mm, LW - 10 * mm, 11 * mm)
+    c.setFillColor(colors.HexColor("#595959"))
+    c.setFont("Helvetica", 6.8)
+    c.drawString(10 * mm, 7.5 * mm, "QUMRA Transport & General Contracting LLC – V15 subcontractor submittals status, %s" % LAB[0])
+    c.drawRightString(LW - 10 * mm, 7.5 * mm, "Page %d of %d" % (doc.page, NPAGES[0]))
+    c.restoreState()
+
+
+LAB = [""]
+
+
+def attachment(n, t, raw, ss, aw, lab):
+    """One landscape page: the tracker's main table as in the Google Sheet."""
+    rows = raw["main"]
+    h = next(i for i, r in enumerate(rows) if r and str(r[0]).strip() == "No.")
+    hdr = rows[h]
+    blocks = [k for k in range(2, len(hdr), 4) if str(hdr[k]).strip()]
+    title = str((rows[1] if h >= 2 else [""])[0] or "")
+    out = []
+    hs = ParagraphStyle("ah", fontName="Helvetica-Bold", fontSize=11, textColor=NAVY, spaceAfter=2)
+    out.append(Paragraph("Attachment A%d – %s%s" % (n, t["pkg"], (" – " + t["sub"]) if t["sub"] != "—" else ""), hs))
+    sub = '<link href="https://docs.google.com/spreadsheets/d/%s" color="#0563C1">%s</link>' % (raw.get("id", ""), title or t["pkg"])
+    out.append(Paragraph(sub + " &nbsp;|&nbsp; extracted %s from Emaar Unifier (latest revision per reference)" % lab, ss["note"]))
+    out.append(Spacer(1, 4))
+    cs = ParagraphStyle("ac", fontName="Helvetica", fontSize=6, leading=7.2)
+    csb = ParagraphStyle("acb", fontName="Helvetica-Bold", fontSize=6.2, leading=7.4)
+    hc = ParagraphStyle("ahc", fontName="Helvetica-Bold", fontSize=6, leading=7, textColor=colors.white, alignment=TA_CENTER)
+    nb = len(blocks)
+    item_w = 104
+    bw = (aw - 14 - item_w) / nb
+    sub_w = [bw * 0.41, bw * 0.15, bw * 0.10, bw * 0.34]
+    rf = 5.6 if bw >= 90 else 5.0
+    cw = [14, item_w] + sub_w * nb
+    r0 = [Paragraph("No.", hc), Paragraph("ITEM", hc)]
+    r1 = ["", ""]
+    st = [("FONT", (0, 0), (-1, -1), "Helvetica", 6), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+          ("ALIGN", (2, 0), (-1, -1), "CENTER"), ("ALIGN", (0, 0), (0, -1), "CENTER"),
+          ("GRID", (0, 0), (-1, -1), 0.35, colors.HexColor("#808080")),
+          ("BACKGROUND", (0, 0), (-1, 0), NAVY), ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+          ("FONT", (0, 0), (-1, 0), "Helvetica-Bold", 6), ("BACKGROUND", (0, 1), (-1, 1), LIGHT),
+          ("FONT", (0, 1), (-1, 1), "Helvetica-Bold", 5.6), ("SPAN", (0, 0), (0, 1)), ("SPAN", (1, 0), (1, 1)), ("BACKGROUND", (0, 1), (1, 1), NAVY),
+          ("TOPPADDING", (0, 0), (-1, -1), 1.6), ("BOTTOMPADDING", (0, 0), (-1, -1), 1.6),
+          ("LEFTPADDING", (0, 0), (-1, -1), 1.6), ("RIGHTPADDING", (0, 0), (-1, -1), 1.6)]
+    for j, k in enumerate(blocks):
+        c0 = 2 + 4 * j
+        nm = short_loc(hdr[k])
+        nm = {"MAS": "MATERIAL (MAS)", "DS": "DOCUMENT (DS)"}.get(nm, "SD – " + nm.upper())
+        r0 += [Paragraph(nm, hc), "", "", ""]
+        r1 += ["REF.", "REV", "ST", "DATE"]
+        st.append(("SPAN", (c0, 0), (c0 + 3, 0)))
+    data = [r0, r1]
+    ri = 2
+    for r in rows[h + 2:]:
+        if not r or not str(cell(r, 1)).strip():
+            break
+        line = [str(cell(r, 0)), Paragraph(str(cell(r, 1)), csb)]
+        for j, k in enumerate(blocks):
+            c0 = 2 + 4 * j
+            ref = str(cell(r, k)).strip()
+            if ref.upper() in (NS, NA, NIR) or not ref:
+                line += [ref or "", "", "", ""]
+                st.append(("SPAN", (c0, ri), (c0 + 3, ri)))
+                kk = "ns" if ref.upper() == NS else "na"
+                st += [("BACKGROUND", (c0, ri), (c0 + 3, ri), colors.HexColor(C[kk][0] if kk == "ns" else "#F2F2F2")),
+                       ("TEXTCOLOR", (c0, ri), (c0 + 3, ri), colors.HexColor(C[kk][1])),
+                       ("FONT", (c0, ri), (c0 + 3, ri), "Helvetica", 5.6)]
+                continue
+            stt = str(cell(r, k + 2)).strip()
+            kk = cls(stt)
+            code = "U" if kk == "ur" else (stt[:1] if kk else stt[:6])
+            d = pdate(cell(r, k + 3))
+            line += [ref, str(cell(r, k + 1)).replace("Rev.", "R"), code, d.strftime("%d-%b-%y") if d else ""]
+            st += [("FONT", (c0, ri), (c0, ri), "Helvetica-Bold", rf), ("FONT", (c0 + 3, ri), (c0 + 3, ri), "Helvetica", rf),
+                   ("FONT", (c0 + 1, ri), (c0 + 1, ri), "Helvetica", rf)]
+            if kk:
+                st += [("BACKGROUND", (c0 + 2, ri), (c0 + 2, ri), colors.HexColor(C[kk][0])),
+                       ("TEXTCOLOR", (c0 + 2, ri), (c0 + 2, ri), colors.HexColor(C[kk][1])),
+                       ("FONT", (c0 + 2, ri), (c0 + 2, ri), "Helvetica-Bold", 6.2)]
+        data.append(line)
+        ri += 1
+    tb = Table(data, colWidths=cw, repeatRows=2)
+    tb.setStyle(TableStyle(st))
+    out.append(tb)
+    out.append(Spacer(1, 5))
+    nn = t["n"]
+    out.append(Paragraph("<b>Summary:</b> A/B approved %d &nbsp;·&nbsp; C/D/F resubmit %d &nbsp;·&nbsp; under review %d "
+                         "&nbsp;·&nbsp; not submitted %d &nbsp;&nbsp;|&nbsp;&nbsp; ST. = consultant code (A approved, B approved "
+                         "as noted, C not approved, D incomplete, F approved with comments – resubmit, U under review). "
+                         "Date = submission date of the latest revision (blank where Unifier keeps none)."
+                         % (nn["ok"], nn["re"], nn["ur"], nn["ns"]), ss["note"]))
+    return out
+
+
 def build(data, out):
     today = datetime.strptime(data["date"], "%Y-%m-%d").date()
     lab = today.strftime("%d %b %Y")
+    LAB[0] = lab
     T = [parse(t) for t in data["trackers"]]
 
     ss = dict(
@@ -252,11 +364,11 @@ def build(data, out):
                 "MAS = material submittal, DS = document submittal, Hall / Changing Rm / Gym = Community Center.", ss["note"]))
 
     # key points
-    p1.append(P("3. Key points for management", ss["h1"]))
+    p1.append(P("3. Key points", ss["h1"]))
     kp = []
-    kp.append("<b>%d of %d</b> tracked submittals are approved (<b>%.0f%%</b>); <b>%d</b> need resubmission, "
-              "<b>%d</b> are with the consultant and <b>%d</b> are not yet submitted."
-              % (tot["ok"], N, pct(tot["ok"], N), tot["re"], tot["ur"], tot["ns"]))
+    kp.append("<b>%d of %d</b> tracked submittals are approved (<b>%.0f%%</b>); <b>%d</b> need resubmission and "
+              "<b>%d</b> are not yet submitted."
+              % (tot["ok"], N, pct(tot["ok"], N), tot["re"], tot["ns"]))
     full = [t["pkg"] for t in T if all(e["k"] == "ok" for e in t["e"] if e["loc"] in VILLA)
             and any(e["loc"] in VILLA for e in t["e"])]
     if full:
@@ -272,11 +384,6 @@ def build(data, out):
             res.append("%s (%s, %s, code %s)" % (ref, t["pkg"], ", ".join(x["loc"] for x in es), code))
     if res:
         kp.append("<b>Resubmissions outstanding (%d):</b> %s." % (len(res), "; ".join(res)))
-    ur = [(today - e["d"]).days for t in T for e in t["e"] if e["k"] == "ur" and e["d"]]
-    if ur:
-        old = max(((today - e["d"]).days, e["ref"], t["pkg"]) for t in T for e in t["e"] if e["k"] == "ur" and e["d"])
-        kp.append("<b>%d</b> items are under consultant review; the longest pending is <b>%s</b> (%s) at <b>%d days</b>."
-                  % (tot["ur"], old[1], old[2], old[0]))
     ns_cc = sum(1 for t in T for e in t["e"] if e["k"] == "ns" and e["loc"] not in VILLA)
     ns_v = tot["ns"] - ns_cc
     if tot["ns"]:
@@ -306,27 +413,26 @@ def build(data, out):
                 out.append((t["pkg"], item, ", ".join(x["loc"] for x in es), ref, es[0]["rev"], es[0]["st"], es[0]["d"]))
         return out
 
-    def table(rows, k, title, days_lbl):
+    def table(rows, k, title):
         p2.append(P(title, ss["h1"]))
         if not rows:
             p2.append(P("None.", ss["b"]))
             return
-        hh = ["Package", "Item", "Location", "Ref.", "Rev.", "Status", "Last sub.", days_lbl]
+        hh = ["Package", "Item", "Location", "Ref.", "Rev.", "Status", "Last sub."]
         tr = [[P(x, ss["sh"]) for x in hh]]
         for pkg, item, loc, ref, rev, stt, d in rows:
             dd = d.strftime("%d-%b-%y") if d else "n/a"
-            dy = str((today - d).days) if d else "—"
             tr.append([P(pkg, ss["s"]), P(item, ss["s"]), P(loc, ss["s"]), P("<b>%s</b>" % ref, ss["s"]), rev,
-                       P(stt, ss["s"]), dd, dy])
-        cw2 = [78, 142, 60, 58, 30, 74, 40, 0]
-        cw2[-1] = fw - sum(cw2)
+                       P(stt, ss["s"]), dd])
+        cw2 = [84, 0, 70, 60, 32, 86, 44]
+        cw2[1] = fw - sum(cw2)
         tb = Table(tr, colWidths=cw2, repeatRows=1)
         tb.setStyle(TableStyle(base_ts + [("BACKGROUND", (5, 1), (5, -1), colors.HexColor(C[k][0])),
-                                          ("ALIGN", (4, 1), (4, -1), "CENTER"), ("ALIGN", (6, 1), (-1, -1), "CENTER")]))
+                                          ("ALIGN", (4, 1), (4, -1), "CENTER"), ("ALIGN", (6, 1), (6, -1), "CENTER")]))
         p2.append(tb)
 
-    table(group("re"), "re", "4. Resubmission required (consultant code C / D / F)", "Days")
-    table(group("ur"), "ur", "5. Under review with the consultant", "Days")
+    table(group("re"), "re", "4. Resubmission required (consultant code C / D / F)")
+    table(group("ur"), "ur", "5. Under review with the consultant")
 
     p2.append(P("6. Not yet submitted (shop drawings registered but not in Unifier)", ss["h1"]))
     ns_rows = []
@@ -355,7 +461,8 @@ def build(data, out):
                 "covering two villa types counts under both. N/A and not-in-register cells are excluded. (3) 'Last sub.' is the "
                 "submission date of the latest revision; 'n/a' where Unifier revised the record in place and keeps no date "
                 "for the new revision. (4) Shop drawings carry no supplier in Unifier and are attributed to the package by "
-                "title.", ss["note"]))
+                "title. (5) Attachments A1–A%d: the package trackers as at %s; the live Google Sheets (with related "
+                "submittals) are in the same Drive folder." % (len(T), lab), ss["note"]))
 
     def deco(c, doc):
         c.saveState()
@@ -365,7 +472,7 @@ def build(data, out):
         c.setFont("Helvetica-Bold", 12.5)
         c.drawString(MARGIN, H - 12 * mm, "GRAND POLO CLUB & RESORT – CLUSTER MONTURA (V15)")
         c.setFont("Helvetica-Bold", 10)
-        c.drawString(MARGIN, H - 18 * mm, "SUBCONTRACTOR SUBMITTALS STATUS – MANAGEMENT REPORT")
+        c.drawString(MARGIN, H - 18 * mm, "SUBCONTRACTOR SUBMITTALS STATUS")
         c.setFont("Helvetica", 8.5)
         c.drawString(MARGIN, H - 23 * mm, "Status as of %s" % lab)
         c.drawRightString(W - MARGIN, H - 12 * mm, "QUMRA")
@@ -376,16 +483,26 @@ def build(data, out):
         c.line(MARGIN, 11 * mm, W - MARGIN, 11 * mm)
         c.setFillColor(colors.HexColor("#595959"))
         c.setFont("Helvetica", 6.8)
-        c.drawString(MARGIN, 7.5 * mm, "QUMRA Transport & General Contracting LLC – V15 subcontractor submittals report, %s" % lab)
-        c.drawRightString(W - MARGIN, 7.5 * mm, "Page %d of 2" % doc.page)
+        c.drawString(MARGIN, 7.5 * mm, "QUMRA Transport & General Contracting LLC – V15 subcontractor submittals status, %s" % lab)
+        c.drawRightString(W - MARGIN, 7.5 * mm, "Page %d of %d" % (doc.page, NPAGES[0]))
         c.restoreState()
 
-    doc = SimpleDocTemplate(out, pagesize=A4, leftMargin=MARGIN, rightMargin=MARGIN, topMargin=TOP,
-                            bottomMargin=BOTTOM, title="V15 Subcontractor Submittals Report – %s" % lab,
-                            author="QUMRA – Technical Department")
-    fh = H - TOP - BOTTOM - 13  # frame padding
+    NPAGES[0] = 2 + len(T)
+    doc = BaseDocTemplate(out, pagesize=A4, title="V15 Subcontractor Submittals Status – %s" % lab,
+                          author="QUMRA – Technical Department")
+    fh = H - TOP - BOTTOM - 13
+    LW, LH = landscape(A4)
+    LM = 10 * mm
+    pf = Frame(MARGIN, BOTTOM, fw, H - TOP - BOTTOM, id="p")
+    lf = Frame(LM, BOTTOM, LW - 2 * LM, LH - LTOP - BOTTOM, id="l")
+    doc.addPageTemplates([PageTemplate("port", [pf], onPage=deco, pagesize=A4),
+                          PageTemplate("land", [lf], onPage=deco_land, pagesize=landscape(A4))])
     story = [KeepInFrame(fw, fh, p1, mode="shrink"), PageBreak(), KeepInFrame(fw, fh, p2, mode="shrink")]
-    doc.build(story, onFirstPage=deco, onLaterPages=deco)
+    for n, (t, raw) in enumerate(zip(T, data["trackers"]), 1):
+        story += [NextPageTemplate("land"), PageBreak()]
+        story.append(KeepInFrame(LW - 2 * LM, LH - LTOP - BOTTOM - 13, attachment(n, t, raw, ss, LW - 2 * LM, lab),
+                                 mode="shrink"))
+    doc.build(story)
     return {t["pkg"]: dict(t["n"], total=t["tot"], pqn=t["pqn"], pqn_status=t["pst"]) for t in T}
 
 
