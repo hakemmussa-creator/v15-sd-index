@@ -36,7 +36,7 @@ C = {"ok": ("#C6EFCE", "#006100"), "re": ("#FFC7CE", "#9C0006"),
 LBL = {"ok": "Approved (A/B)", "re": "Resubmit (C/D/F)", "ur": "Under review", "ns": "Not submitted"}
 NS, NA, NIR = "NOT SUBMITTED", "N/A", "NOT IN REGISTER"
 LOC_ORDER = ["MAS", "DS", "4BR T01", "4BR T02", "5BR T03", "5BR T04", "Hall", "Changing Rm", "Gym"]
-VILLA = {"MAS", "DS", "4BR T01", "4BR T02", "5BR T03", "5BR T04"}
+VILLA = {"PQN", "MAS", "DS", "4BR T01", "4BR T02", "5BR T03", "5BR T04"}
 
 W, H = A4
 MARGIN = 14 * mm
@@ -59,6 +59,8 @@ def cls(s):
 
 def short_loc(h):
     u = (h or "").upper()
+    if "(PQN)" in u or u.startswith("PRE-QUAL") or u.startswith("PREQUAL"):
+        return "PQN"
     if "(MAS)" in u or u.startswith("MATERIAL"):
         return "MAS"
     if "(DS)" in u or u.startswith("DOCUMENT"):
@@ -89,23 +91,38 @@ def cell(r, i):
     return (r[i] if i < len(r) else "") or ""
 
 
+def sections(rows):
+    """Header rows starting 'No.' (one per section). Returns [(label, header_index)].
+    A tracker may have one grid (standard) or several sections (e.g. drawings / PQN / MAS)."""
+    out = []
+    for i, r in enumerate(rows):
+        if r and str(r[0]).strip() == "No.":
+            lab = ""
+            if i >= 1 and rows[i - 1] and str(rows[i - 1][0]).strip() and i - 1 > 2:
+                lab = str(rows[i - 1][0]).strip()
+            out.append((lab, i))
+    return out
+
+
 def parse(t):
     rows = t["main"]
-    h = next(i for i, r in enumerate(rows) if r and str(r[0]).strip() == "No.")
-    hdr = rows[h]
+    secs = sections(rows)
+    h = secs[0][1]
     title = " ".join(str(x) for x in (rows[1] if h >= 2 and len(rows) > 1 else []))
-    blocks = [(k, short_loc(hdr[k])) for k in range(2, len(hdr), 4) if str(hdr[k]).strip()]
     name = t["name"]
     pkg, sub = (name.split(" – ", 1) + ["—"])[:2] if " – " in name else (name, "—")
     entries = []
-    for r in rows[h + 2:]:
+    for _lab, h in secs:
+      hdr = rows[h]
+      blocks = [(k, short_loc(hdr[k])) for k in range(2, len(hdr), 4) if str(hdr[k]).strip()]
+      for r in rows[h + 2:]:
         if not r or not str(cell(r, 1)).strip():
             break
         item = str(cell(r, 1)).strip()
         for k, loc in blocks:
             ref = str(cell(r, k)).strip()
-            if not ref or ref.upper() in (NA, NIR):
-                continue
+            if not ref or ref.upper() in (NA, NIR) or loc == "PQN":
+                continue  # pre-qualification is reported in its own column, not counted
             if ref.upper() == NS:
                 entries.append(dict(item=item, loc=loc, ref="", rev="", st=NS, k="ns", d=None))
                 continue
@@ -180,76 +197,81 @@ LAB = [""]
 def attachment(n, t, raw, ss, aw, lab):
     """One landscape page: the tracker's main table as in the Google Sheet."""
     rows = raw["main"]
-    h = next(i for i, r in enumerate(rows) if r and str(r[0]).strip() == "No.")
-    hdr = rows[h]
-    blocks = [k for k in range(2, len(hdr), 4) if str(hdr[k]).strip()]
-    title = str((rows[1] if h >= 2 else [""])[0] or "")
+    secs = sections(rows)
+    h0 = secs[0][1]
+    title = str((rows[1] if h0 >= 2 else [""])[0] or "")
     out = []
     hs = ParagraphStyle("ah", fontName="Helvetica-Bold", fontSize=11, textColor=NAVY, spaceAfter=2)
     out.append(Paragraph("Attachment A%d – %s%s" % (n, t["pkg"], (" – " + t["sub"]) if t["sub"] != "—" else ""), hs))
     sub = '<link href="https://docs.google.com/spreadsheets/d/%s" color="#0563C1">%s</link>' % (raw.get("id", ""), title or t["pkg"])
     out.append(Paragraph(sub + " &nbsp;|&nbsp; extracted %s from Emaar Unifier (latest revision per reference)" % lab, ss["note"]))
     out.append(Spacer(1, 4))
-    cs = ParagraphStyle("ac", fontName="Helvetica", fontSize=6, leading=7.2)
     csb = ParagraphStyle("acb", fontName="Helvetica-Bold", fontSize=6.2, leading=7.4)
     hc = ParagraphStyle("ahc", fontName="Helvetica-Bold", fontSize=6, leading=7, textColor=colors.white, alignment=TA_CENTER)
-    nb = len(blocks)
-    item_w = 104
-    bw = (aw - 14 - item_w) / nb
+    sl = ParagraphStyle("asl", fontName="Helvetica-Bold", fontSize=8, textColor=NAVY, spaceBefore=3, spaceAfter=2)
+    allb = [[k for k in range(2, len(rows[h]), 4) if str(rows[h][k]).strip()] for _l, h in secs]
+    nbmax = max(len(x) for x in allb)
+    item_w = 104 if nbmax >= 5 else 200
+    bw = min((aw - 14 - item_w) / nbmax, 150)
     sub_w = [bw * 0.41, bw * 0.15, bw * 0.10, bw * 0.34]
     rf = 5.6 if bw >= 90 else 5.0
-    cw = [14, item_w] + sub_w * nb
-    r0 = [Paragraph("No.", hc), Paragraph("ITEM", hc)]
-    r1 = ["", ""]
-    st = [("FONT", (0, 0), (-1, -1), "Helvetica", 6), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-          ("ALIGN", (2, 0), (-1, -1), "CENTER"), ("ALIGN", (0, 0), (0, -1), "CENTER"),
-          ("GRID", (0, 0), (-1, -1), 0.35, colors.HexColor("#808080")),
-          ("BACKGROUND", (0, 0), (-1, 0), NAVY), ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-          ("FONT", (0, 0), (-1, 0), "Helvetica-Bold", 6), ("BACKGROUND", (0, 1), (-1, 1), LIGHT),
-          ("FONT", (0, 1), (-1, 1), "Helvetica-Bold", 5.6), ("SPAN", (0, 0), (0, 1)), ("SPAN", (1, 0), (1, 1)), ("BACKGROUND", (0, 1), (1, 1), NAVY),
-          ("TOPPADDING", (0, 0), (-1, -1), 1.6), ("BOTTOMPADDING", (0, 0), (-1, -1), 1.6),
-          ("LEFTPADDING", (0, 0), (-1, -1), 1.6), ("RIGHTPADDING", (0, 0), (-1, -1), 1.6)]
-    for j, k in enumerate(blocks):
-        c0 = 2 + 4 * j
-        nm = short_loc(hdr[k])
-        nm = {"MAS": "MATERIAL (MAS)", "DS": "DOCUMENT (DS)"}.get(nm, "SD – " + nm.upper())
-        r0 += [Paragraph(nm, hc), "", "", ""]
-        r1 += ["REF.", "REV", "ST", "DATE"]
-        st.append(("SPAN", (c0, 0), (c0 + 3, 0)))
-    data = [r0, r1]
-    ri = 2
-    for r in rows[h + 2:]:
-        if not r or not str(cell(r, 1)).strip():
-            break
-        line = [str(cell(r, 0)), Paragraph(str(cell(r, 1)), csb)]
+    for (slab, h), blocks in zip(secs, allb):
+        hdr = rows[h]
+        if slab and len(secs) > 1:
+            out.append(Paragraph(slab, sl))
+        nb = len(blocks)
+        cw = [14, item_w] + sub_w * nb
+        r0 = [Paragraph("No.", hc), Paragraph(str(cell(hdr, 1)) or "ITEM", hc)]
+        r1 = ["", ""]
+        st = [("FONT", (0, 0), (-1, -1), "Helvetica", 6), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+              ("ALIGN", (2, 0), (-1, -1), "CENTER"), ("ALIGN", (0, 0), (0, -1), "CENTER"),
+              ("GRID", (0, 0), (-1, -1), 0.35, colors.HexColor("#808080")),
+              ("BACKGROUND", (0, 0), (-1, 0), NAVY), ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+              ("FONT", (0, 0), (-1, 0), "Helvetica-Bold", 6), ("BACKGROUND", (0, 1), (-1, 1), LIGHT),
+              ("FONT", (0, 1), (-1, 1), "Helvetica-Bold", 5.6), ("SPAN", (0, 0), (0, 1)), ("SPAN", (1, 0), (1, 1)), ("BACKGROUND", (0, 1), (1, 1), NAVY),
+              ("TOPPADDING", (0, 0), (-1, -1), 1.6), ("BOTTOMPADDING", (0, 0), (-1, -1), 1.6),
+              ("LEFTPADDING", (0, 0), (-1, -1), 1.6), ("RIGHTPADDING", (0, 0), (-1, -1), 1.6)]
         for j, k in enumerate(blocks):
             c0 = 2 + 4 * j
-            ref = str(cell(r, k)).strip()
-            if ref.upper() in (NS, NA, NIR) or not ref:
-                line += [ref or "", "", "", ""]
-                st.append(("SPAN", (c0, ri), (c0 + 3, ri)))
-                kk = "ns" if ref.upper() == NS else "na"
-                st += [("BACKGROUND", (c0, ri), (c0 + 3, ri), colors.HexColor(C[kk][0] if kk == "ns" else "#F2F2F2")),
-                       ("TEXTCOLOR", (c0, ri), (c0 + 3, ri), colors.HexColor(C[kk][1])),
-                       ("FONT", (c0, ri), (c0 + 3, ri), "Helvetica", 5.6)]
-                continue
-            stt = str(cell(r, k + 2)).strip()
-            kk = cls(stt)
-            code = "U" if kk == "ur" else (stt[:1] if kk else stt[:6])
-            d = pdate(cell(r, k + 3))
-            line += [ref, str(cell(r, k + 1)).replace("Rev.", "R"), code, d.strftime("%d-%b-%y") if d else ""]
-            st += [("FONT", (c0, ri), (c0, ri), "Helvetica-Bold", rf), ("FONT", (c0 + 3, ri), (c0 + 3, ri), "Helvetica", rf),
-                   ("FONT", (c0 + 1, ri), (c0 + 1, ri), "Helvetica", rf)]
-            if kk:
-                st += [("BACKGROUND", (c0 + 2, ri), (c0 + 2, ri), colors.HexColor(C[kk][0])),
-                       ("TEXTCOLOR", (c0 + 2, ri), (c0 + 2, ri), colors.HexColor(C[kk][1])),
-                       ("FONT", (c0 + 2, ri), (c0 + 2, ri), "Helvetica-Bold", 6.2)]
-        data.append(line)
-        ri += 1
-    tb = Table(data, colWidths=cw, repeatRows=2)
-    tb.setStyle(TableStyle(st))
-    out.append(tb)
-    out.append(Spacer(1, 5))
+            nm = short_loc(hdr[k])
+            nm = {"MAS": "MATERIAL (MAS)", "DS": "DOCUMENT (DS)", "PQN": "PRE-QUALIFICATION (PQN)"}.get(nm, "SD – " + nm.upper())
+            r0 += [Paragraph(nm, hc), "", "", ""]
+            r1 += ["REF.", "REV", "ST", "DATE"]
+            st.append(("SPAN", (c0, 0), (c0 + 3, 0)))
+        data = [r0, r1]
+        ri = 2
+        for r in rows[h + 2:]:
+            if not r or not str(cell(r, 1)).strip():
+                break
+            line = [str(cell(r, 0)), Paragraph(str(cell(r, 1)), csb)]
+            for j, k in enumerate(blocks):
+                c0 = 2 + 4 * j
+                ref = str(cell(r, k)).strip()
+                if ref.upper() in (NS, NA, NIR) or not ref:
+                    line += [ref or "", "", "", ""]
+                    st.append(("SPAN", (c0, ri), (c0 + 3, ri)))
+                    kk = "ns" if ref.upper() == NS else "na"
+                    st += [("BACKGROUND", (c0, ri), (c0 + 3, ri), colors.HexColor(C[kk][0] if kk == "ns" else "#F2F2F2")),
+                           ("TEXTCOLOR", (c0, ri), (c0 + 3, ri), colors.HexColor(C[kk][1])),
+                           ("FONT", (c0, ri), (c0 + 3, ri), "Helvetica", 5.6)]
+                    continue
+                stt = str(cell(r, k + 2)).strip()
+                kk = cls(stt)
+                code = "U" if kk == "ur" else (stt[:1] if kk else stt[:6])
+                d = pdate(cell(r, k + 3))
+                line += [ref, str(cell(r, k + 1)).replace("Rev.", "R"), code, d.strftime("%d-%b-%y") if d else ""]
+                st += [("FONT", (c0, ri), (c0, ri), "Helvetica-Bold", rf), ("FONT", (c0 + 3, ri), (c0 + 3, ri), "Helvetica", rf),
+                       ("FONT", (c0 + 1, ri), (c0 + 1, ri), "Helvetica", rf)]
+                if kk:
+                    st += [("BACKGROUND", (c0 + 2, ri), (c0 + 2, ri), colors.HexColor(C[kk][0])),
+                           ("TEXTCOLOR", (c0 + 2, ri), (c0 + 2, ri), colors.HexColor(C[kk][1])),
+                           ("FONT", (c0 + 2, ri), (c0 + 2, ri), "Helvetica-Bold", 6.2)]
+            data.append(line)
+            ri += 1
+        tb = Table(data, colWidths=cw, repeatRows=2, hAlign="LEFT")
+        tb.setStyle(TableStyle(st))
+        out.append(tb)
+        out.append(Spacer(1, 5))
     nn = t["n"]
     out.append(Paragraph("<b>Summary:</b> A/B approved %d &nbsp;·&nbsp; C/D/F resubmit %d &nbsp;·&nbsp; under review %d "
                          "&nbsp;·&nbsp; not submitted %d &nbsp;&nbsp;|&nbsp;&nbsp; ST. = consultant code (A approved, B approved "
